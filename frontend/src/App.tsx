@@ -107,7 +107,7 @@ function App() {
 
   const questions: Question[] = [
     {
-      id: 'income',
+      id: 'gross_monthly_income',
       text: 'What is your gross monthly income (before taxes)?',
       type: 'number',
       placeholder: 'Enter amount in USD',
@@ -115,7 +115,7 @@ function App() {
       step: 100
     },
     {
-      id: 'other_income',
+      id: 'other_monthly_income',
       text: 'What is your other reliable monthly income?',
       type: 'number',
       placeholder: 'Enter amount in USD (0 if none)',
@@ -123,7 +123,7 @@ function App() {
       step: 100
     },
     {
-      id: 'expenses',
+      id: 'fixed_monthly_expenses',
       text: 'What are your total monthly fixed expenses?',
       type: 'number',
       placeholder: 'Enter amount in USD',
@@ -131,7 +131,7 @@ function App() {
       step: 100
     },
     {
-      id: 'savings',
+      id: 'liquid_savings',
       text: 'How much liquid savings do you currently have?',
       type: 'number',
       placeholder: 'Enter amount in USD',
@@ -145,13 +145,13 @@ function App() {
       options: ['300-579 (Poor)', '580-669 (Fair)', '670-739 (Good)', '740-799 (Very Good)', '800-850 (Excellent)', 'I don\'t know']
     },
     {
-      id: 'vehicle_ownership',
+      id: 'ownership_horizon',
       text: 'How long do you plan to keep your next vehicle?',
       type: 'select',
       options: ['1-2 years', '3-4 years', '5-6 years', '7+ years', 'I\'m not sure']
     },
     {
-      id: 'annual_miles',
+      id: 'annual_mileage',
       text: 'How many miles do you typically drive per year?',
       type: 'select',
       options: ['Under 10,000', '10,000-15,000', '15,000-20,000', '20,000-25,000', 'Over 25,000']
@@ -163,7 +163,7 @@ function App() {
       options: ['Just me', '2-3 people', '4-5 people', '6+ people', 'Need cargo space', 'Need towing capacity']
     },
     {
-      id: 'driving_profile',
+      id: 'commute_profile',
       text: 'How would you describe your driving or commute profile?',
       type: 'select',
       options: ['City driving', 'Highway driving', 'Mixed city/highway', 'Mostly short trips', 'Long road trips']
@@ -180,6 +180,8 @@ function App() {
 
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [currentInput, setCurrentInput] = useState<any>('')
+  const [apiResponse, setApiResponse] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const currentQuestionIndex = Object.keys(answers).length
   const currentQuestion = questions[currentQuestionIndex]
   
@@ -189,6 +191,39 @@ function App() {
       setCurrentInput('') // Reset input for next question
     }
   }
+
+  useEffect(() => {
+    if (Object.keys(answers).length == questions.length) {
+      const sendAnswers = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("http://localhost:3000/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(answers),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("=== Server Response ===");
+        console.log(JSON.stringify(data, null, 2));
+        setApiResponse(data);
+      } catch (err) {
+        console.error("Error sending answers:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    sendAnswers();
+
+    }
+  }, [answers, questions.length])
 
   const onInputChange = (value: any) => {
     setCurrentInput(value)
@@ -264,6 +299,33 @@ function App() {
 
       {/* Content */}
       <main className="mx-auto max-w-6xl px-6 py-8 md:py-12">
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className="mb-8 rounded-2xl bg-white shadow-lg border border-gray-200 p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB0A1E] mb-4"></div>
+            <h2 className="text-xl font-semibold text-[#111111]">🤖 AI is analyzing your data...</h2>
+            <p className="text-gray-600 mt-2">This may take a few seconds</p>
+          </div>
+        )}
+        
+        {/* API Response Display */}
+        {apiResponse && (
+          <div className="mb-8 rounded-2xl bg-white shadow-lg border border-gray-200 p-6">
+            <h2 className="text-2xl font-semibold text-[#111111] mb-4">🎉 AI Response Received!</h2>
+            <div className="bg-gray-50 rounded-lg p-4 overflow-auto max-h-96">
+              <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+                {JSON.stringify(apiResponse, null, 2)}
+              </pre>
+            </div>
+            <button
+              onClick={() => setApiResponse(null)}
+              className="mt-4 px-4 py-2 bg-[#EB0A1E] text-white rounded-lg hover:opacity-90 transition"
+            >
+              Clear Response
+            </button>
+          </div>
+        )}
+        
         <AnimatePresence mode="wait">
           {showQuestionnaire && !questionnaireDone ? (
             <motion.section
