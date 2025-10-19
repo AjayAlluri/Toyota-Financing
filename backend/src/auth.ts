@@ -11,6 +11,7 @@ export interface AuthRequest extends Request {
     email: string;
     firstName: string;
     lastName: string;
+    role: 'user' | 'sales';
   };
 }
 
@@ -26,13 +27,14 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 // Generate JWT token
-export function generateToken(user: { id: number; email: string; firstName: string; lastName: string }): string {
+export function generateToken(user: { id: number; email: string; firstName: string; lastName: string; role: 'user' | 'sales' }): string {
   return jwt.sign(
     {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
-      lastName: user.lastName
+      lastName: user.lastName,
+      role: user.role
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
@@ -66,7 +68,8 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
     id: decoded.id,
     email: decoded.email,
     firstName: decoded.firstName,
-    lastName: decoded.lastName
+    lastName: decoded.lastName,
+    role: decoded.role || 'user'
   };
 
   next();
@@ -84,10 +87,36 @@ export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction
         id: decoded.id,
         email: decoded.email,
         firstName: decoded.firstName,
-        lastName: decoded.lastName
+        lastName: decoded.lastName,
+        role: decoded.role || 'user'
       };
     }
   }
 
   next();
+}
+
+// Role-based authorization middleware
+export function requireRole(role: 'user' | 'sales') {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (req.user.role !== role) {
+      return res.status(403).json({ error: `Access denied. ${role} role required.` });
+    }
+
+    next();
+  };
+}
+
+// Sales role authorization middleware
+export function requireSalesRole(req: AuthRequest, res: Response, next: NextFunction) {
+  return requireRole('sales')(req, res, next);
+}
+
+// User role authorization middleware
+export function requireUserRole(req: AuthRequest, res: Response, next: NextFunction) {
+  return requireRole('user')(req, res, next);
 }

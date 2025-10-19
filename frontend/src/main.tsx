@@ -5,9 +5,11 @@ import App from './App.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { RoleProtectedRoute } from './components/RoleProtectedRoute'
 import Landing from './pages/Landing.tsx'
 import SignIn from './pages/SignIn.tsx'
 import Profile from './pages/Profile.tsx'
+import SalesDashboard from './pages/SalesDashboard.tsx'
 import UploadDocuments from './pages/UploadDocuments.tsx'
 import FindDealership from './pages/FindDealership.tsx'
 
@@ -26,6 +28,14 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <Profile />
       </ProtectedRoute>
+    ) 
+  },
+  { 
+    path: '/sales', 
+    element: (
+      <RoleProtectedRoute requiredRole="sales">
+        <SalesDashboard />
+      </RoleProtectedRoute>
     ) 
   },
   { path: '/upload', element: <UploadDocuments /> },

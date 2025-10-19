@@ -7,6 +7,7 @@ import OpenAI from "openai";
 import { initializeDatabase, createUserProfile, getUserProfile, updateUserProfile, createCarRecommendation } from "./database.js";
 import authRoutes from "./routes/auth.js";
 import documentRoutes from "./routes/documents.js";
+import salesRoutes from "./routes/sales.js";
 import { optionalAuth, AuthRequest } from "./auth.js";
 
 const app = express();
@@ -33,6 +34,9 @@ app.use("/api/auth", authRoutes);
 
 // Document routes
 app.use("/api/documents", documentRoutes);
+
+// Sales routes (requires sales role)
+app.use("/api/sales", salesRoutes);
 
 // Register OpenAI route
 registerOpenAIRoute(app);

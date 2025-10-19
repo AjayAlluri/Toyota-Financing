@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 
 // Landing page (home): black hero with blended header and right-aligned nav
 export default function Landing() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function Landing() {
       {/* Custom Cursor with Red Glow */}
       <motion.div
         className="fixed pointer-events-none z-50"
-        style={{
+          style={{
           left: mousePosition.x,
           top: mousePosition.y,
         }}
@@ -90,12 +90,23 @@ export default function Landing() {
                 Get Quote
               </Link>
               {token ? (
-                <Link
-                  to="/profile"
-                  className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
-                >
-                  Profile
-                </Link>
+                <>
+                  {user?.role === 'sales' ? (
+                    <Link
+                      to="/sales"
+                      className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
+                    >
+                      Sales Dashboard
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/profile"
+                      className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
+                    >
+                      Profile
+                    </Link>
+                  )}
+                </>
               ) : (
               <Link
                 to="/signin"
@@ -120,9 +131,9 @@ export default function Landing() {
             />
             
             {/* Dark Overlay - Only in Hero Section */}
-            <div className="absolute inset-0 bg-black/70"></div>
+            <div className="absolute inset-0 bg-black/60"></div>
 
-            <div className="max-w-6xl mx-auto text-center relative z-10">
+            <div className="max-w-5xl mx-auto text-center relative z-10">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -131,21 +142,17 @@ export default function Landing() {
               >
                 {/* Main headline */}
                 <div className="space-y-4">
-                  <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-                    Find Your Perfect
-                    <span className="block bg-gradient-to-r from-red-500 to-red-400 bg-clip-text text-transparent">
-                      TOYOTA
-                    </span>
+                  <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
+                    Find your perfect Toyota.
                   </h1>
-                  <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-                    Get personalized Toyota recommendations based on your budget, lifestyle, and preferences. 
-                    Start your journey to the perfect vehicle today.
+                  <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-light">
+                    Discover the ride that truly fits your life.
                   </p>
                 </div>
 
                 {/* CTA Button */}
                 <motion.div 
-                  className="flex justify-center items-center pt-8"
+                  className="flex justify-center items-center pt-4"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.4 }}
@@ -153,32 +160,11 @@ export default function Landing() {
                   <Link
                     to="/carRec"
                     state={{ startQuiz: true }}
-                    className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-lg font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-2xl hover:shadow-red-500/30 transform hover:scale-105"
+                    className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25 transform hover:scale-105"
                   >
                     Start Your Quote
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                </motion.div>
-
-                {/* Trust indicators */}
-                <motion.div 
-                  className="flex flex-wrap justify-center items-center gap-8 pt-12 text-white/60"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.6 }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    <span>Secure & Private</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    <span>5-Minute Process</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5" />
-                    <span>Expert Recommendations</span>
-                  </div>
                 </motion.div>
               </motion.div>
             </div>

@@ -112,7 +112,7 @@ function calculateLeasePayment(basePayment: number, mileage: number, termMonths:
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [plans, setPlans] = useState<Record<PlanKey, PlanData>>(defaultPlans)
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
@@ -470,12 +470,23 @@ function App() {
               Home
             </Link>
             {token ? (
-              <Link
-                to="/profile"
-                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
-              >
-                Profile
-              </Link>
+              <>
+                {user?.role === 'sales' ? (
+                  <Link
+                    to="/sales"
+                    className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
+                  >
+                    Sales Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    to="/profile"
+                    className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
+                  >
+                    Profile
+                  </Link>
+                )}
+              </>
             ) : (
               <Link
                 to="/signin"

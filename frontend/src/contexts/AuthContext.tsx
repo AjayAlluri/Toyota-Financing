@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 interface User {
   id: number;
   email: string;
   firstName: string;
   lastName: string;
+  role: 'user' | 'sales';
   createdAt?: string;
 }
 
@@ -12,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  register: (email: string, password: string, firstName: string, lastName: string, role?: 'user' | 'sales') => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -98,14 +99,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
+  const register = async (email: string, password: string, firstName: string, lastName: string, role: 'user' | 'sales' = 'user') => {
     try {
       const response = await fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, firstName, lastName }),
+        body: JSON.stringify({ email, password, firstName, lastName, role }),
       });
 
       const data = await response.json();

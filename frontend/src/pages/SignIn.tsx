@@ -9,6 +9,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [role, setRole] = useState<'user' | 'sales'>('user')
   const [isRegistering, setIsRegistering] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,7 +18,7 @@ export default function SignIn() {
   const navigate = useNavigate()
   const location = useLocation()
   
-  const from = (location.state as any)?.from?.pathname || '/'
+  // const from = (location.state as any)?.from?.pathname || '/'
   const customMessage = (location.state as any)?.message
   const quoteData = (location.state as any)?.answers
   const selectedPlan = (location.state as any)?.selectedPlan
@@ -29,7 +30,7 @@ export default function SignIn() {
 
     try {
       if (isRegistering) {
-        await register(email, password, firstName, lastName)
+        await register(email, password, firstName, lastName, role)
       } else {
         await login(email, password)
       }
@@ -126,6 +127,22 @@ export default function SignIn() {
                   />
                 </label>
               </div>
+              
+              {/* Role Selection */}
+              <label className="block">
+                <span className="block text-sm mb-1 text-white/80">Account Type</span>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as 'user' | 'sales')}
+                  className="w-full rounded bg-white/5 text-white px-3 py-2 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-[#E50914] transition duration-200"
+                >
+                  <option value="user" className="bg-gray-800 text-white">Customer</option>
+                  <option value="sales" className="bg-gray-800 text-white">Sales Representative</option>
+                </select>
+                <p className="text-white/40 text-xs mt-1">
+                  {role === 'user' ? 'Access to quotes and document uploads' : 'Access to view all customer data and profiles'}
+                </p>
+              </label>
             </>
           )}
 

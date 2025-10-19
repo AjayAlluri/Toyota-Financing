@@ -42,6 +42,7 @@ export interface User {
   password_hash: string;
   first_name: string;
   last_name: string;
+  role: 'user' | 'sales';
   created_at: string;
   updated_at: string;
 }
@@ -96,10 +97,18 @@ export async function initializeDatabase() {
         password_hash TEXT NOT NULL,
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
+        role TEXT DEFAULT 'user' CHECK (role IN ('user', 'sales')),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Add role column to existing users table if it doesn't exist
+    await dbRun(`
+      ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user' CHECK (role IN ('user', 'sales'))
+    `).catch(() => {
+      // Column already exists, ignore error
+    });
 
     // User profiles table
     await dbRun(`
@@ -161,10 +170,10 @@ export async function initializeDatabase() {
 }
 
 // User operations
-export async function createUser(email: string, passwordHash: string, firstName: string, lastName: string): Promise<number> {
+export async function createUser(email: string, passwordHash: string, firstName: string, lastName: string, role: 'user' | 'sales' = 'user'): Promise<number> {
   const result = await runQuery(
-    'INSERT INTO users (email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?)',
-    [email, passwordHash, firstName, lastName]
+    'INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES (?, ?, ?, ?, ?)',
+    [email, passwordHash, firstName, lastName, role]
   );
   return result.lastID;
 }
@@ -236,6 +245,54 @@ export async function createCarRecommendation(userId: number, profileId: number,
 }
 
 export async function getUserCarRecommendations(userId: number): Promise<CarRecommendation[]> {
+  return await allQuery('SELECT * FROM car_recommendations WHERE user_id = ? ORDER BY created_at DESC', [userId]) as CarRecommendation[];
+}
+
+// Sales operations - access to all user data
+export async function getAllUsers(): Promise<User[]> {
+  return await allQuery('SELECT * FROM users ORDER BY created_at DESC') as User[];
+}
+
+export async function getAllUserProfiles(): Promise<(UserProfile & { user: User })[]> {
+  return await allQuery(`
+    SELECT up.*, u.email, u.first_name, u.last_name, u.role, u.created_at as user_created_at
+    FROM user_profiles up
+    JOIN users u ON up.user_id = u.id
+    ORDER BY up.created_at DESC
+  `) as (UserProfile & { user: User })[];
+}
+
+export async function getAllDocuments(): Promise<(Document & { user: User })[]> {
+  return await allQuery(`
+    SELECT d.*, u.email, u.first_name, u.last_name, u.role
+    FROM documents d
+    JOIN users u ON d.user_id = u.id
+    ORDER BY d.uploaded_at DESC
+  `) as (Document & { user: User })[];
+}
+
+export async function getAllCarRecommendations(): Promise<(CarRecommendation & { user: User })[]> {
+  return await allQuery(`
+    SELECT cr.*, u.email, u.first_name, u.last_name, u.role
+    FROM car_recommendations cr
+    JOIN users u ON cr.user_id = u.id
+    ORDER BY cr.created_at DESC
+  `) as (CarRecommendation & { user: User })[];
+}
+
+export async function getUserByIdForSales(userId: number): Promise<User | null> {
+  return await getQuery('SELECT * FROM users WHERE id = ?', [userId]) as User | null;
+}
+
+export async function getUserProfileForSales(userId: number): Promise<UserProfile | null> {
+  return await getQuery('SELECT * FROM user_profiles WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', [userId]) as UserProfile | null;
+}
+
+export async function getUserDocumentsForSales(userId: number): Promise<Document[]> {
+  return await allQuery('SELECT * FROM documents WHERE user_id = ? ORDER BY uploaded_at DESC', [userId]) as Document[];
+}
+
+export async function getUserCarRecommendationsForSales(userId: number): Promise<CarRecommendation[]> {
   return await allQuery('SELECT * FROM car_recommendations WHERE user_id = ? ORDER BY created_at DESC', [userId]) as CarRecommendation[];
 }
 
