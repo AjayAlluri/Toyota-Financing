@@ -7,14 +7,39 @@ import { Label } from '@/components/ui/label'
 
 type PlanKey = 'Essential' | 'Comfort' | 'Premium'
 
-const plans: Record<PlanKey, {
+interface CarData {
+  year?: number;
+  make?: string;
+  model?: string;
+  trim?: string;
+  price?: number;
+  mileage?: string;
+  seats?: number;
+  headline_feature?: string;
+  finance?: {
+    apr_percent?: number;
+    term_months?: number;
+    estimated_monthly_payment?: number;
+  };
+  lease?: {
+    term_months?: number;
+    estimated_monthly_payment?: number;
+    annual_mileage_limit?: number;
+    lease_score?: number;
+  };
+}
+
+interface PlanData {
   title: string;
   priceRange: string;
   blurb: string;
-  match: number;        // 0–100
+  match: number;
   details: string[];
-  heroImages: string[];    // multiple images per plan (filled by API later)
-}> = {
+  heroImages: string[];
+  carData?: CarData;
+}
+
+const defaultPlans: Record<PlanKey, PlanData> = {
   Essential: {
     title: 'Essential',
     priceRange: '',
@@ -22,9 +47,7 @@ const plans: Record<PlanKey, {
     match: 72,
     details: ['Base infotainment', 'Great MPG', 'Low insurance'],
     heroImages: [
-      'https://placehold.co/1400x800?text=Car+Image+1',
-      'https://placehold.co/1400x800?text=Car+Image+2',
-      'https://placehold.co/1400x800?text=Car+Image+3'
+      'https://placehold.co/1400x800?text=Toyota+Essential',
     ],
   },
   Comfort: {
@@ -34,9 +57,7 @@ const plans: Record<PlanKey, {
     match: 88,
     details: ['Advanced safety', 'Comfort pack', 'Alloy wheels'],
     heroImages: [
-      'https://placehold.co/1400x800?text=Car+Image+1',
-      'https://placehold.co/1400x800?text=Car+Image+2',
-      'https://placehold.co/1400x800?text=Car+Image+3'
+      'https://placehold.co/1400x800?text=Toyota+Comfort',
     ],
   },
   Premium: {
@@ -46,24 +67,58 @@ const plans: Record<PlanKey, {
     match: 91,
     details: ['Premium audio', 'Leather interior', 'Driver assist+'],
     heroImages: [
-      'https://placehold.co/1400x800?text=Car+Image+1',
-      'https://placehold.co/1400x800?text=Car+Image+2',
-      'https://placehold.co/1400x800?text=Car+Image+3'
+      'https://placehold.co/1400x800?text=Toyota+Premium',
     ],
   },
 }
 
+// Calculate monthly payment using loan formula
+function calculateMonthlyPayment(principal: number, annualRate: number, months: number, downPayment: number): number {
+  const loanAmount = principal - downPayment;
+  if (loanAmount <= 0) return 0;
+  const monthlyRate = annualRate / 100 / 12;
+  if (monthlyRate === 0) return loanAmount / months;
+  return Math.round((loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1));
+}
+
+// Calculate adjusted lease payment based on mileage and term
+function calculateLeasePayment(basePayment: number, mileage: number, termMonths: number): number {
+  if (!basePayment) return 0;
+  
+  // Base mileage is 12,000 miles/year
+  const baseMileage = 12000;
+  
+  // Mileage adjustment: +3% per 2,500 miles over base
+  const mileageOverBase = Math.max(0, mileage - baseMileage);
+  const mileageMultiplier = 1 + (mileageOverBase / 2500) * 0.03;
+  
+  // Term adjustment: base is 36 months
+  // Shorter terms (24, 30): slightly lower rate (-1.5% per 6 months under)
+  // Longer terms (42, 48): slightly higher rate (+1% per 6 months over)
+  const baseTerm = 36;
+  const termDifference = termMonths - baseTerm;
+  const termAdjustment = termDifference < 0 
+    ? (termDifference / 6) * 0.015  // Negative, so this reduces the cost
+    : (termDifference / 6) * 0.01;  // Positive, so this increases the cost
+  const termMultiplier = 1 + termAdjustment;
+  
+  // Apply both adjustments
+  const adjustedPayment = basePayment * mileageMultiplier * termMultiplier;
+  
+  return Math.round(adjustedPayment);
+}
+
 function App() {
   const location = useLocation()
-  const navigate = useNavigate()
+  const [plans, setPlans] = useState<Record<PlanKey, PlanData>>(defaultPlans)
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
   const [showQuestionnaire, setShowQuestionnaire] = useState<boolean>(false)
-  // moved state declaration to avoid redeclaration error
-  // (remove this line and use only the declaration in src/App.tsx near the questionnaire use)
   const [downPayment, setDownPayment] = useState<number>(5000)
   const [months, setMonths] = useState<number>(36)
-  const entries = useMemo(() => Object.entries(plans) as [PlanKey, typeof plans[PlanKey]][], [])
+   const [leaseMonths, setLeaseMonths] = useState<number>(36)
+  const [annualMileage, setAnnualMileage] = useState<number>(12000)
+  const entries = useMemo(() => Object.entries(plans) as [PlanKey, PlanData][], [plans])
   const [imageIndexByPlan, setImageIndexByPlan] = useState<Record<PlanKey, number>>({ Essential: 0, Comfort: 0, Premium: 0 })
   const setImageIndex = (planKey: PlanKey, idx: number) => setImageIndexByPlan((prev) => ({ ...prev, [planKey]: idx }))
   const goPrev = (planKey: PlanKey) => {
@@ -108,7 +163,7 @@ function App() {
 
   const questions: Question[] = [
     {
-      id: 'income',
+      id: 'gross_monthly_income',
       text: 'What is your gross monthly income (before taxes)?',
       type: 'number',
       placeholder: 'Enter amount in USD',
@@ -116,7 +171,7 @@ function App() {
       step: 100
     },
     {
-      id: 'other_income',
+      id: 'other_monthly_income',
       text: 'What is your other reliable monthly income?',
       type: 'number',
       placeholder: 'Enter amount in USD (0 if none)',
@@ -124,7 +179,7 @@ function App() {
       step: 100
     },
     {
-      id: 'expenses',
+      id: 'fixed_monthly_expenses',
       text: 'What are your total monthly fixed expenses?',
       type: 'number',
       placeholder: 'Enter amount in USD',
@@ -132,7 +187,7 @@ function App() {
       step: 100
     },
     {
-      id: 'savings',
+      id: 'liquid_savings',
       text: 'How much liquid savings do you currently have?',
       type: 'number',
       placeholder: 'Enter amount in USD',
@@ -146,13 +201,13 @@ function App() {
       options: ['300-579 (Poor)', '580-669 (Fair)', '670-739 (Good)', '740-799 (Very Good)', '800-850 (Excellent)', 'I don\'t know']
     },
     {
-      id: 'vehicle_ownership',
+      id: 'ownership_horizon',
       text: 'How long do you plan to keep your next vehicle?',
       type: 'select',
       options: ['1-2 years', '3-4 years', '5-6 years', '7+ years', 'I\'m not sure']
     },
     {
-      id: 'annual_miles',
+      id: 'annual_mileage',
       text: 'How many miles do you typically drive per year?',
       type: 'select',
       options: ['Under 10,000', '10,000-15,000', '15,000-20,000', '20,000-25,000', 'Over 25,000']
@@ -164,7 +219,7 @@ function App() {
       options: ['Just me', '2-3 people', '4-5 people', '6+ people', 'Need cargo space', 'Need towing capacity']
     },
     {
-      id: 'driving_profile',
+      id: 'commute_profile',
       text: 'How would you describe your driving or commute profile?',
       type: 'select',
       options: ['City driving', 'Highway driving', 'Mixed city/highway', 'Mostly short trips', 'Long road trips']
@@ -181,6 +236,7 @@ function App() {
 
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [currentInput, setCurrentInput] = useState<any>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const currentQuestionIndex = Object.keys(answers).length
   const currentQuestion = questions[currentQuestionIndex]
   
@@ -190,6 +246,98 @@ function App() {
       setCurrentInput('') // Reset input for next question
     }
   }
+
+  useEffect(() => {
+    if (Object.keys(answers).length == questions.length) {
+      const sendAnswers = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("http://localhost:3000/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(answers),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("=== AI Response Received ===");
+        console.log(JSON.stringify(data, null, 2));
+        
+        // Update plans with AI data
+        if (data.Budget && data.Balanced && data.Premium) {
+          setPlans({
+            Essential: {
+              title: 'Essential',
+              priceRange: data.Budget.price ? `$${data.Budget.price.toLocaleString()}` : '',
+              blurb: `${data.Budget.year} ${data.Budget.model} ${data.Budget.trim}`,
+              match: 72,
+              details: [
+                data.Budget.headline_feature || 'Base features',
+                data.Budget.mileage || 'Great MPG',
+                `${data.Budget.seats || 5} seats`
+              ],
+              heroImages: [
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Budget.model)}`,
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Budget.model)}+2`,
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Budget.model)}+3`
+              ],
+              carData: data.Budget
+            },
+            Comfort: {
+              title: 'Comfort',
+              priceRange: data.Balanced.price ? `$${data.Balanced.price.toLocaleString()}` : '',
+              blurb: `${data.Balanced.year} ${data.Balanced.model} ${data.Balanced.trim}`,
+              match: 88,
+              details: [
+                data.Balanced.headline_feature || 'Balanced features',
+                data.Balanced.mileage || 'Great MPG',
+                `${data.Balanced.seats || 5} seats`
+              ],
+              heroImages: [
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Balanced.model)}`,
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Balanced.model)}+2`,
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Balanced.model)}+3`
+              ],
+              carData: data.Balanced
+            },
+            Premium: {
+              title: 'Premium',
+              priceRange: data.Premium.price ? `$${data.Premium.price.toLocaleString()}` : '',
+              blurb: `${data.Premium.year} ${data.Premium.model} ${data.Premium.trim}`,
+              match: 91,
+              details: [
+                data.Premium.headline_feature || 'Premium features',
+                data.Premium.mileage || 'Great MPG',
+                `${data.Premium.seats || 5} seats`
+              ],
+              heroImages: [
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Premium.model)}`,
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Premium.model)}+2`,
+                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Premium.model)}+3`
+              ],
+              carData: data.Premium
+            }
+          });
+          
+          // Close questionnaire to show results
+          setShowQuestionnaire(false);
+        }
+      } catch (err) {
+        console.error("Error sending answers:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    sendAnswers();
+
+    }
+  }, [answers, questions.length])
 
   const onInputChange = (value: any) => {
     setCurrentInput(value)
@@ -265,6 +413,15 @@ function App() {
 
       {/* Content */}
       <main className="mx-auto max-w-6xl px-6 py-8 md:py-12">
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className="mb-8 rounded-2xl bg-white shadow-lg border border-gray-200 p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB0A1E] mb-4"></div>
+            <h2 className="text-xl font-semibold text-[#111111]">Analyzing Your Financial Profile</h2>
+            <p className="text-gray-600 mt-2">Finding the best Toyota options for your budget</p>
+          </div>
+        )}
+        
         <AnimatePresence mode="wait">
           {showQuestionnaire && !questionnaireDone ? (
             <motion.section
@@ -439,8 +596,17 @@ function App() {
                   transition={{ type: 'spring', stiffness: 320, damping: 26 }}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-semibold text-[#111111]">{plan.title}</h2>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-xl md:text-2xl font-semibold text-[#111111]">{plan.title}</h2>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                          key === 'Essential' ? 'bg-blue-100 text-blue-700' :
+                          key === 'Comfort' ? 'bg-green-100 text-green-700' :
+                          'bg-purple-100 text-purple-700'
+                        }`}>
+                          {key === 'Essential' ? 'Budget' : key === 'Comfort' ? 'Balanced' : 'Premium'}
+                        </span>
+                      </div>
                       <p className="mt-1 text-sm text-[#9CA3AF]">{plan.blurb}</p>
                     </div>
                     <span className="inline-flex items-center justify-center whitespace-nowrap text-center leading-none text-sm md:text-base font-medium text-[#111111] bg-gray-100 rounded-full px-3 py-1 border border-gray-200 min-w-[120px]">
@@ -500,52 +666,114 @@ function App() {
                       </div>
 
                       <div className="p-6 space-y-6">
-                        {/* Arrows replace thumbnails on mobile (above) */}
-
-                        {/* Finance controls (mobile) */}
-                        <div className="space-y-5">
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <Label className="text-[#111111]">Down Payment</Label>
-                              <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                        {/* Finance/Lease controls (mobile) */}
+                        {mode === 'finance' ? (
+                          <div className="space-y-5">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Down Payment</Label>
+                                <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[downPayment]}
+                                  value={[downPayment]}
+                                  onValueChange={(v) => setDownPayment(v[0])}
+                                  min={0}
+                                  max={20000}
+                                  step={500}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `$${v.toLocaleString()}`}
+                                />
+                              </div>
                             </div>
-                            <div className="mt-2">
-                              <Slider
-                                defaultValue={[downPayment]}
-                                value={[downPayment]}
-                                onValueChange={(v) => setDownPayment(v[0])}
-                                min={0}
-                                max={20000}
-                                step={500}
-                                className="w-full"
-                                showTooltip
-                                tooltipContent={(v) => `$${v.toLocaleString()}`}
-                              />
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Term Length</Label>
+                                <span className="text-sm text-[#111111]">{months} months</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[months]}
+                                  value={[months]}
+                                  onValueChange={(v) => setMonths(v[0])}
+                                  min={12}
+                                  max={72}
+                                  step={6}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `${v} mo`}
+                                />
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <Label className="text-[#111111]">Months</Label>
-                              <span className="text-sm text-[#111111]">{months}</span>
+                        ) : (
+                          <div className="space-y-5">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Lease Term</Label>
+                                <span className="text-sm text-[#111111]">{leaseMonths} months</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[leaseMonths]}
+                                  value={[leaseMonths]}
+                                  onValueChange={(v) => setLeaseMonths(v[0])}
+                                  min={24}
+                                  max={48}
+                                  step={6}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `${v} mo`}
+                                />
+                              </div>
                             </div>
-                            <div className="mt-2">
-                              <Slider
-                                defaultValue={[months]}
-                                value={[months]}
-                                onValueChange={(v) => setMonths(v[0])}
-                                min={12}
-                                max={72}
-                                step={6}
-                                className="w-full"
-                                showTooltip
-                                tooltipContent={(v) => `${v} mo`}
-                              />
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Annual Mileage</Label>
+                                <span className="text-sm text-[#111111]">{annualMileage.toLocaleString()} mi/yr</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[annualMileage]}
+                                  value={[annualMileage]}
+                                  onValueChange={(v) => setAnnualMileage(v[0])}
+                                  min={7500}
+                                  max={20000}
+                                  step={2500}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `${v.toLocaleString()} mi`}
+                                />
+                              </div>
                             </div>
                           </div>
-                          <div className="pt-1 flex items-center justify-between">
-                            <span className="text-sm font-medium text-[#111111]">Estimated Monthly</span>
-                            <span className="text-sm text-[#111111]">$—/mo</span>
-                          </div>
+                        )}
+                        
+                        <div className="pt-2 flex items-center justify-between border-t border-gray-200">
+                          <span className="text-base font-semibold text-[#111111]">Estimated Monthly</span>
+                          <span className="text-2xl font-bold text-[#EB0A1E]">
+                            {(() => {
+                              if (mode === 'finance' && plan.carData?.price && plan.carData?.finance?.apr_percent) {
+                                const payment = calculateMonthlyPayment(
+                                  plan.carData.price,
+                                  plan.carData.finance.apr_percent,
+                                  months,
+                                  downPayment
+                                );
+                                return `$${payment.toLocaleString()}/mo`;
+                              } else if (mode === 'lease' && plan.carData?.lease?.estimated_monthly_payment) {
+                                const payment = calculateLeasePayment(
+                                  plan.carData.lease.estimated_monthly_payment,
+                                  annualMileage,
+                                  leaseMonths
+                                );
+                                return `$${payment.toLocaleString()}/mo`;
+                              }
+                              return '$—/mo';
+                            })()}
+                          </span>
                         </div>
 
                         {mode === 'lease' && (
@@ -641,52 +869,114 @@ function App() {
                       </div>
 
                       <div className="p-6 md:p-7 space-y-6">
-                        {/* Arrows shown on image area; thumbnails removed */}
-
-                        {/* Finance controls (desktop/tablet) */}
-                        <div className="space-y-5">
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <Label className="text-[#111111]">Down Payment</Label>
-                              <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                        {/* Finance/Lease controls (desktop/tablet) */}
+                        {mode === 'finance' ? (
+                          <div className="space-y-5">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Down Payment</Label>
+                                <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[downPayment]}
+                                  value={[downPayment]}
+                                  onValueChange={(v) => setDownPayment(v[0])}
+                                  min={0}
+                                  max={20000}
+                                  step={500}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `$${v.toLocaleString()}`}
+                                />
+                              </div>
                             </div>
-                            <div className="mt-2">
-                              <Slider
-                                defaultValue={[downPayment]}
-                                value={[downPayment]}
-                                onValueChange={(v) => setDownPayment(v[0])}
-                                min={0}
-                                max={20000}
-                                step={500}
-                                className="w-full"
-                                showTooltip
-                                tooltipContent={(v) => `$${v.toLocaleString()}`}
-                              />
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Term Length</Label>
+                                <span className="text-sm text-[#111111]">{months} months</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[months]}
+                                  value={[months]}
+                                  onValueChange={(v) => setMonths(v[0])}
+                                  min={12}
+                                  max={72}
+                                  step={6}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `${v} mo`}
+                                />
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <Label className="text-[#111111]">Months</Label>
-                              <span className="text-sm text-[#111111]">{months}</span>
+                        ) : (
+                          <div className="space-y-5">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Lease Term</Label>
+                                <span className="text-sm text-[#111111]">{leaseMonths} months</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[leaseMonths]}
+                                  value={[leaseMonths]}
+                                  onValueChange={(v) => setLeaseMonths(v[0])}
+                                  min={24}
+                                  max={48}
+                                  step={6}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `${v} mo`}
+                                />
+                              </div>
                             </div>
-                            <div className="mt-2">
-                              <Slider
-                                defaultValue={[months]}
-                                value={[months]}
-                                onValueChange={(v) => setMonths(v[0])}
-                                min={12}
-                                max={72}
-                                step={6}
-                                className="w-full"
-                                showTooltip
-                                tooltipContent={(v) => `${v} mo`}
-                              />
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[#111111]">Annual Mileage</Label>
+                                <span className="text-sm text-[#111111]">{annualMileage.toLocaleString()} mi/yr</span>
+                              </div>
+                              <div className="mt-2">
+                                <Slider
+                                  defaultValue={[annualMileage]}
+                                  value={[annualMileage]}
+                                  onValueChange={(v) => setAnnualMileage(v[0])}
+                                  min={7500}
+                                  max={20000}
+                                  step={2500}
+                                  className="w-full"
+                                  showTooltip
+                                  tooltipContent={(v) => `${v.toLocaleString()} mi`}
+                                />
+                              </div>
                             </div>
                           </div>
-                          <div className="pt-1 flex items-center justify-between">
-                            <span className="text-sm font-medium text-[#111111]">Estimated Monthly</span>
-                            <span className="text-sm text-[#111111]">$—/mo</span>
-                          </div>
+                        )}
+                        
+                        <div className="pt-2 flex items-center justify-between border-t border-gray-200">
+                          <span className="text-base font-semibold text-[#111111]">Estimated Monthly</span>
+                          <span className="text-2xl font-bold text-[#EB0A1E]">
+                            {(() => {
+                              if (mode === 'finance' && plan.carData?.price && plan.carData?.finance?.apr_percent) {
+                                const payment = calculateMonthlyPayment(
+                                  plan.carData.price,
+                                  plan.carData.finance.apr_percent,
+                                  months,
+                                  downPayment
+                                );
+                                return `$${payment.toLocaleString()}/mo`;
+                              } else if (mode === 'lease' && plan.carData?.lease?.estimated_monthly_payment) {
+                                const payment = calculateLeasePayment(
+                                  plan.carData.lease.estimated_monthly_payment,
+                                  annualMileage,
+                                  leaseMonths
+                                );
+                                return `$${payment.toLocaleString()}/mo`;
+                              }
+                              return '$—/mo';
+                            })()}
+                          </span>
                         </div>
 
                         {mode === 'lease' && (
