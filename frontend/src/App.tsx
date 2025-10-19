@@ -359,22 +359,31 @@ function App() {
   }, [currentQuestionIndex])
 
   const canProceed = () => {
-    if (!currentQuestion) return false
+    if (!currentQuestion) {
+      console.log('No current question');
+      return false;
+    }
     
     // For select and yesno, check if answer is already stored
     if (currentQuestion.type === 'select' || currentQuestion.type === 'yesno') {
-      const currentAnswer = answers[currentQuestion.id as keyof typeof answers]
-      return currentAnswer !== undefined
+      const currentAnswer = answers[currentQuestion.id as keyof typeof answers];
+      console.log('Select/YesNo question - current answer:', currentAnswer);
+      return currentAnswer !== undefined;
     }
     
     // For number and text, check current input
     switch (currentQuestion.type) {
       case 'number':
-        return currentInput !== '' && currentInput >= 0
+        const numberValid = currentInput !== '' && currentInput >= 0;
+        console.log('Number question - currentInput:', currentInput, 'valid:', numberValid);
+        return numberValid;
       case 'text':
-        return currentInput !== '' && String(currentInput).trim() !== ''
+        const textValid = currentInput !== '' && String(currentInput).trim() !== '';
+        console.log('Text question - currentInput:', currentInput, 'valid:', textValid);
+        return textValid;
       default:
-        return false
+        console.log('Unknown question type:', currentQuestion.type);
+        return false;
     }
   }
   

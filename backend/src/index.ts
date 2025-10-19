@@ -156,6 +156,8 @@ RULES
 - Include only real, currently available Toyota models (latest model year).
 - Exclude Lexus, discontinued, or concept models.
 - Each category must include exactly ONE car.
+- Provide 3 cars with DIFFERENT price ranges (low, medium, high).
+- The backend will automatically sort them: cheapest → Essential, middle → Comfort, most expensive → Premium.
 - All prices and APR estimates must reflect current U.S. averages.
 - Headline_feature must be concise (≤2 words).
 - Output strictly valid JSON with ACTUAL CALCULATED NUMBERS ONLY.
@@ -232,7 +234,30 @@ RULES
       }
       
       const out = jsonString ? JSON.parse(jsonString) : {};
-      console.log("\n=== Parsed JSON ===");
+      
+      // Sort cars by price: Most expensive = Premium, Middle = Comfort, Cheapest = Essential
+      if (out.Budget && out.Balanced && out.Premium) {
+        const cars = [
+          { category: 'Budget', data: out.Budget, price: out.Budget.price || 0 },
+          { category: 'Balanced', data: out.Balanced, price: out.Balanced.price || 0 },
+          { category: 'Premium', data: out.Premium, price: out.Premium.price || 0 }
+        ];
+        
+        // Sort by price (ascending: cheapest first)
+        cars.sort((a, b) => a.price - b.price);
+        
+        // Reassign based on price order
+        out.Budget = cars[0]?.data;    // Cheapest = Essential
+        out.Balanced = cars[1]?.data;  // Middle = Comfort  
+        out.Premium = cars[2]?.data;   // Most expensive = Premium
+        
+        console.log("\n=== Sorted by Price ===");
+        console.log(`Essential (Budget): ${cars[0]?.data?.model || 'Unknown'} - $${cars[0]?.price || 0}`);
+        console.log(`Comfort (Balanced): ${cars[1]?.data?.model || 'Unknown'} - $${cars[1]?.price || 0}`);
+        console.log(`Premium: ${cars[2]?.data?.model || 'Unknown'} - $${cars[2]?.price || 0}`);
+      }
+      
+      console.log("\n=== Final JSON ===");
       console.log(JSON.stringify(out, null, 2));
 
       // Save profile and recommendations for authenticated users
