@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
@@ -389,20 +389,20 @@ function App() {
         <div className="mx-auto max-w-6xl px-6 py-4 md:py-6">
           <div className="flex items-start justify-between">
             <div className="leading-tight">
-              <Link to="/" className="text-2xl md:text-3xl font-semibold tracking-tight text-[#111111] hover:opacity-90 transition-opacity">
+              <Link to="/" className="text-2xl md:text-4xl font-semibold tracking-tight text-[#111111] hover:opacity-90 transition-opacity">
                 Toyota <span className="text-[#EB0A1E]">Quote</span>
               </Link>
             </div>
-            <nav className="flex items-center gap-3">
+            <nav className="flex items-center gap-4 md:gap-6">
               <Link
                 to="/"
-                className="px-3 py-1.5 text-sm font-medium rounded bg-[#111111] text-white hover:opacity-90 focus:opacity-90 transition-opacity duration-200"
+                className="px-4 py-2 text-base font-medium rounded bg-[#111111] text-white hover:opacity-90 focus:opacity-90 transition-opacity duration-200"
               >
                 Home
               </Link>
               <Link
                 to="/signin"
-                className="px-3 py-1.5 text-sm font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                className="px-4 py-2 text-base font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
               >
                 Sign Up / Sign In
               </Link>
@@ -1008,6 +1008,17 @@ function App() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Next step button */}
+        <div className="mt-8 flex justify-end">
+          <button
+            type="button"
+            onClick={() => navigate('/upload', { state: { answers, selectedPlan: selected } })}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#EB0A1E] px-5 py-2 text-white font-medium hover:opacity-90 focus:opacity-90 transition"
+          >
+            Let's take it to the next step
+          </button>
         </div>
             </motion.div>
           )}

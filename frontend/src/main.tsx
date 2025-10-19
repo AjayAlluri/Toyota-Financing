@@ -5,6 +5,8 @@ import App from './App.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Landing from './pages/Landing.tsx'
 import SignIn from './pages/SignIn.tsx'
+import UploadDocuments from './pages/UploadDocuments.tsx'
+import FindDealership from './pages/FindDealership.tsx'
 
 // Router configuration
 const router = createBrowserRouter([
@@ -15,6 +17,8 @@ const router = createBrowserRouter([
   { path: '/carRec', element: <App /> },
 
   { path: '/signin', element: <SignIn /> },
+  { path: '/upload', element: <UploadDocuments /> },
+  { path: '/dealers', element: <FindDealership /> },
 ])
 
 createRoot(document.getElementById('root')!).render(

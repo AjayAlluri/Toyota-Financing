@@ -18,19 +18,19 @@ export default function SignIn() {
       {/* Header matching landing style */}
       <header className="w-full">
         <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-          <Link to="/">
-          <h1 className="sr-only">Toyota Quote</h1>
+          <Link to="/" className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight">
+            Toyota <span className="text-[#E50914]">Quote</span>
           </Link>
-          <nav className="ml-auto flex items-center gap-4">
+          <nav className="ml-auto flex items-center gap-4 sm:gap-6">
             <Link
               to="/carRec"
-              className="px-4 py-2 text-sm font-medium text-white/90 hover:text-white transition-colors duration-200 ease-in-out rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
+              className="px-4 py-2 text-base font-medium text-white/90 hover:text-white transition-colors duration-200 ease-in-out rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
             >
               Forms
             </Link>
             <Link
               to="/"
-              className="px-4 py-2 text-sm font-medium rounded bg-white/5 text-white hover:bg-[#E50914] hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
+              className="px-4 py-2 text-base font-medium rounded bg-white/5 text-white hover:bg-[#E50914] hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
             >
               Home
             </Link>
