@@ -2,13 +2,53 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { Car, Shield, Clock, Star, ArrowRight, CheckCircle, Zap, Users, Award } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 // Landing page (home): black hero with blended header and right-aligned nav
 export default function Landing() {
   const { token } = useAuth()
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [])
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white overflow-hidden" style={{ cursor: 'none' }}>
+      {/* Custom Cursor with Red Glow */}
+      <motion.div
+        className="fixed pointer-events-none z-50"
+        style={{
+          left: mousePosition.x,
+          top: mousePosition.y,
+        }}
+        animate={{
+          x: -12,
+          y: -12,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 500,
+          damping: 28
+        }}
+      >
+        <div className="relative">
+          {/* Trail effect */}
+          <div className="absolute inset-0 w-8 h-8 bg-red-500/20 rounded-full blur-lg animate-ping"></div>
+          {/* Outer glow */}
+          <div className="absolute inset-0 w-6 h-6 bg-red-500/30 rounded-full blur-md animate-pulse"></div>
+          {/* Inner glow */}
+          <div className="absolute inset-0 w-4 h-4 bg-red-400/50 rounded-full blur-sm"></div>
+          {/* Core cursor */}
+          <div className="w-3 h-3 bg-red-500 rounded-full shadow-lg shadow-red-500/50"></div>
+        </div>
+      </motion.div>
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
@@ -71,68 +111,16 @@ export default function Landing() {
         {/* Hero Section */}
         <main className="relative">
           <section className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
-            {/* Floating Car Icons */}
-            <div className="absolute inset-0 pointer-events-none">
-              <motion.div
-                className="absolute top-20 left-10 text-red-500/20"
-                animate={{ 
-                  y: [0, -20, 0],
-                  rotate: [0, 5, 0]
-                }}
-                transition={{ 
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Car className="w-16 h-16" />
-              </motion.div>
-              <motion.div
-                className="absolute top-32 right-20 text-red-500/15"
-                animate={{ 
-                  y: [0, 15, 0],
-                  rotate: [0, -3, 0]
-                }}
-                transition={{ 
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1
-                }}
-              >
-                <Car className="w-12 h-12" />
-              </motion.div>
-              <motion.div
-                className="absolute bottom-40 left-20 text-red-500/10"
-                animate={{ 
-                  y: [0, -10, 0],
-                  rotate: [0, 2, 0]
-                }}
-                transition={{ 
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 2
-                }}
-              >
-                <Car className="w-20 h-20" />
-              </motion.div>
-              <motion.div
-                className="absolute bottom-20 right-10 text-red-500/25"
-                animate={{ 
-                  y: [0, 25, 0],
-                  rotate: [0, -4, 0]
-                }}
-                transition={{ 
-                  duration: 3.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.5
-                }}
-              >
-                <Car className="w-14 h-14" />
-              </motion.div>
-            </div>
+            {/* Supra Background Image - Only in Hero Section */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: "url('/supra.png')"
+              }}
+            />
+            
+            {/* Dark Overlay - Only in Hero Section */}
+            <div className="absolute inset-0 bg-black/70"></div>
 
             <div className="max-w-6xl mx-auto text-center relative z-10">
               <motion.div
@@ -359,7 +347,7 @@ export default function Landing() {
               >
                 <h2 className="text-4xl md:text-5xl font-bold mb-6">
                   Ready to Find Your Perfect TOYOTA?
-                </h2>
+            </h2>
                 <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
                   Join thousands of satisfied customers who found their ideal Toyota through our personalized recommendation system.
                 </p>
