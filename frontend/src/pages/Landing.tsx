@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
-import { Car, Shield, Clock, Star, ArrowRight, CheckCircle, Zap, Users, Award } from 'lucide-react'
+import { Car, Shield, Clock, Star, ArrowRight, Zap, Users, Award } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { ShaderAnimation } from '@/components/ui/shader-animation'
 
 // Landing page (home): black hero with blended header and right-aligned nav
 export default function Landing() {
   const { token } = useAuth()
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [introVisible, setIntroVisible] = useState(true)
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -17,13 +19,19 @@ export default function Landing() {
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
+
+  useEffect(() => {
+    // Let shader breathe, show TOYOTA, then QUOTE, then fade out smoothly
+    const timer = setTimeout(() => setIntroVisible(false), 4200)
+    return () => clearTimeout(timer)
+  }, [])
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white overflow-hidden" style={{ cursor: 'none' }}>
       {/* Custom Cursor with Red Glow */}
       <motion.div
         className="fixed pointer-events-none z-50"
-        style={{
+          style={{
           left: mousePosition.x,
           top: mousePosition.y,
         }}
@@ -48,6 +56,21 @@ export default function Landing() {
           <div className="w-3 h-3 bg-red-500 rounded-full shadow-lg shadow-red-500/50"></div>
         </div>
       </motion.div>
+
+      {/* Intro overlay: shader + staged brand text, fades out smoothly */}
+      <div className={`fixed inset-0 z-[60] transition-opacity duration-700 ${introVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0 bg-black" />
+        <div className="absolute inset-0">
+          <ShaderAnimation />
+        </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="-mt-4 text-5xl md:text-7xl font-bold tracking-tight text-white opacity-0 animate-[introFade_900ms_400ms_ease-out_forwards]">TOYOTA</span>
+          <span className="text-5xl md:text-7xl font-bold tracking-tight text-red-400 mt-2 opacity-0 animate-[introFade_900ms_2000ms_ease-out_forwards]">Quote</span>
+        </div>
+        <style>{`
+          @keyframes introFade { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+        `}</style>
+      </div>
 
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
