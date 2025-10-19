@@ -110,6 +110,7 @@ function calculateLeasePayment(basePayment: number, mileage: number, termMonths:
 
 function App() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [plans, setPlans] = useState<Record<PlanKey, PlanData>>(defaultPlans)
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
