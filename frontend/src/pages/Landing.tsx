@@ -30,11 +30,13 @@ export default function Landing() {
         <header className="w-full">
           <div className="mx-auto max-w-7xl px-6 py-4 flex items-start justify-between">
             {/* Brand + subtitle (left) */}
-            <div className="leading-tight">
-              <div className="text-base sm:text-xl md:text-2xl font-semibold text-white">
-                Toyota <span className="text-[#E50914]">Quote</span>
+            <Link to="/">
+              <div className="leading-tight">
+                <div className="text-base sm:text-xl md:text-2xl font-semibold text-white">
+                  Toyota <span className="text-[#E50914]">Quote</span>
+                </div>
               </div>
-            </div>
+            </Link>
 
             {/* Right-aligned nav actions */}
             <nav className="flex items-center gap-3">

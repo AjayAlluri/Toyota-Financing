@@ -12,10 +12,8 @@ const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
   { path: '/landing', element: <Landing /> },
 
-  // Existing carRec page preserved as-is (App)
   { path: '/carRec', element: <App /> },
 
-  // Temporary sign in page
   { path: '/signin', element: <SignIn /> },
 ])
 
