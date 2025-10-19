@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useAuth } from '../contexts/AuthContext'
 
 // Landing page (home): black hero with blended header and right-aligned nav
 export default function Landing() {
+  const { token } = useAuth()
+  
   return (
     <div className="relative min-h-screen bg-black text-white overflow-hidden">
       {/* Background image layer with gradient overlay */}
@@ -45,14 +48,23 @@ export default function Landing() {
                 state={{ startQuiz: true }}
                 className="px-4 py-2 text-base font-medium text-white/90 hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914] rounded"
               >
-                Forms
+                Get Quote
               </Link>
-              <Link
-                to="/signin"
-                className="px-4 py-2 text-base font-medium rounded bg-white/5 text-white hover:bg-[#E50914] hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
-              >
-                Sign In
-              </Link>
+              {token ? (
+                <Link
+                  to="/profile"
+                  className="px-4 py-2 text-base font-medium rounded bg-white/5 text-white hover:bg-[#E50914] hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
+                >
+                  Profile
+                </Link>
+              ) : (
+                <Link
+                  to="/signin"
+                  className="px-4 py-2 text-base font-medium rounded bg-white/5 text-white hover:bg-[#E50914] hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
+                >
+                  Sign In
+                </Link>
+              )}
             </nav>
           </div>
         </header>
