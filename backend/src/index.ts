@@ -8,6 +8,8 @@ import OpenAI from "openai";
 const app = express();
 const port = 3000;
 
+
+
 app.use(cors());
 app.use(express.json());
 
@@ -88,7 +90,11 @@ Respond fast — prioritize concise, accurate results.
 ====================================
 OUTPUT FORMAT
 ====================================
-Return ONLY valid JSON. The output must be parseable JSON with this structure:
+Return ONLY valid, parseable JSON with ACTUAL NUMBERS (not expressions or formulas).
+Do NOT include any calculations like (4000+2000-1000)*0.15 - calculate and return the actual number.
+Do NOT include markdown, code blocks, or any text outside the JSON object.
+
+The output must be parseable JSON with this structure:
 
 {
   "Budget": {
@@ -141,7 +147,9 @@ RULES
 - Each category must include exactly ONE car.
 - All prices and APR estimates must reflect current U.S. averages.
 - Headline_feature must be concise (≤2 words).
-- Output strictly valid JSON (no markdown, no extra text).
+- Output strictly valid JSON with ACTUAL CALCULATED NUMBERS ONLY.
+- Do NOT include markdown, source citations, or any text after the JSON object.
+- Do NOT use mathematical expressions - calculate them to actual numbers.
 - Prioritize response speed and structured accuracy.`
               }
             ]
@@ -201,7 +209,18 @@ RULES
       console.log("\n=== Message Content ===");
       console.log(content);
       
-      const out = content ? JSON.parse(content) : {};
+      // Extract only the JSON object (remove any extra text like sources, "Paid.", etc.)
+      let jsonString = content.trim();
+      
+      // Find the first { and last }
+      const firstBrace = jsonString.indexOf('{');
+      const lastBrace = jsonString.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+      }
+      
+      const out = jsonString ? JSON.parse(jsonString) : {};
       console.log("\n=== Parsed JSON ===");
       console.log(JSON.stringify(out, null, 2));
 
