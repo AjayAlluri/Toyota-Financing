@@ -18,7 +18,9 @@ export default function SignIn() {
       {/* Header matching landing style */}
       <header className="w-full">
         <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+          <Link to="/">
           <h1 className="sr-only">Toyota Quote</h1>
+          </Link>
           <nav className="ml-auto flex items-center gap-4">
             <Link
               to="/carRec"
