@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useAuth } from './contexts/AuthContext'
 
 type PlanKey = 'Essential' | 'Comfort' | 'Premium'
 
@@ -53,6 +54,7 @@ const plans: Record<PlanKey, {
 
 function App() {
   const location = useLocation()
+  const { user, signOut } = useAuth()
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
   const [showQuestionnaire, setShowQuestionnaire] = useState<boolean>(false)
@@ -132,12 +134,29 @@ function App() {
               >
                 Home
               </Link>
-              <Link
-                to="/signin"
-                className="px-3 py-1.5 text-sm font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
-              >
-                Sign Up / Sign In
-              </Link>
+              {user ? (
+                <>
+                  <Link
+                    to={user.role === 'sales' ? '/dealer' : '/profile'}
+                    className="px-3 py-1.5 text-sm font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    {user.role === 'sales' ? 'Sales Portal' : 'Profile'}
+                  </Link>
+                  <button
+                    onClick={signOut}
+                    className="px-3 py-1.5 text-sm font-medium rounded bg-gray-100 text-[#111111] hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/signin"
+                  className="px-3 py-1.5 text-sm font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Sign Up / Sign In
+                </Link>
+              )}
             </nav>
           </div>
         </div>
