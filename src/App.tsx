@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -51,8 +52,11 @@ const plans: Record<PlanKey, {
 }
 
 function App() {
+  const location = useLocation()
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
+  const [showQuestionnaire, setShowQuestionnaire] = useState<boolean>(false)
+  const [answers, setAnswers] = useState<boolean[]>([])
   const entries = useMemo(() => Object.entries(plans) as [PlanKey, typeof plans[PlanKey]][], [])
   const [imageIndexByPlan, setImageIndexByPlan] = useState<Record<PlanKey, number>>({ Essential: 0, Comfort: 0, Premium: 0 })
   const setImageIndex = (planKey: PlanKey, idx: number) => setImageIndexByPlan((prev) => ({ ...prev, [planKey]: idx }))
@@ -82,26 +86,105 @@ function App() {
     []
   )
 
+  const questions: string[] = [
+    'Do you prefer better fuel economy?',
+    'Is advanced safety a priority?',
+    'Do you want a sporty driving feel?',
+    'Is all-wheel drive important?',
+    'Do you take long road trips often?',
+    'Would you pay more for premium audio?',
+    'Is leather interior a must-have?',
+    'Do you need ample cargo space?',
+    'Will you tow occasionally?',
+    'Do you value the latest tech features?'
+  ]
+
+  const currentQuestionIndex = answers.length
+  const onAnswer = (value: boolean) => setAnswers((prev) => [...prev, value])
+  const questionnaireDone = answers.length >= questions.length
+
+  // If route was navigated to with startQuiz flag, open questionnaire immediately
+  if (!showQuestionnaire && (location.state as any)?.startQuiz) {
+    setShowQuestionnaire(true)
+    // clear the flag so back/forward doesn't re-trigger
+    ;(location.state as any).startQuiz = false
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F5] font-sans">
       {/* Top accent bars */}
       <div className="h-8 w-full bg-black" />
       <div className="h-1 w-full bg-[#EB0A1E]" />
 
-      {/* Header */}
+      {/* Header aligned to landing: brand left, actions right */}
       <header className="bg-white/90 backdrop-blur border-b border-gray-200">
-        <div className="mx-auto max-w-6xl px-6 py-6 md:py-8">
-          <div className="flex items-baseline justify-between">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#111111]">
-              TOYOTA <span className="text-[#EB0A1E]">Quote</span>
-            </h1>
-            <p className="text-sm md:text-base text-[#9CA3AF]">Personalized Recommendation</p>
+        <div className="mx-auto max-w-6xl px-6 py-4 md:py-6">
+          <div className="flex items-start justify-between">
+            <div className="leading-tight">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#111111]">
+                Toyota <span className="text-[#EB0A1E]">Quote</span>
+              </h1>
+            </div>
+            <nav className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="px-3 py-1.5 text-sm font-medium rounded bg-[#111111] text-white hover:opacity-90 focus:opacity-90 transition-opacity duration-200"
+              >
+                Home
+              </Link>
+              <Link
+                to="/signin"
+                className="px-3 py-1.5 text-sm font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+              >
+                Sign Up / Sign In
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
 
       {/* Content */}
       <main className="mx-auto max-w-6xl px-6 py-8 md:py-12">
+        <AnimatePresence mode="wait">
+          {showQuestionnaire && !questionnaireDone ? (
+            <motion.section
+              key="questionnaire"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="mx-auto max-w-2xl"
+            >
+              <div className="rounded-2xl bg-white shadow-lg border border-gray-200 p-6 md:p-8">
+                <p className="text-sm text-[#6b7280] mb-2">Question {currentQuestionIndex + 1} of {questions.length}</p>
+                <h2 className="text-xl md:text-2xl font-semibold text-[#111111] tracking-tight">
+                  {questions[currentQuestionIndex]}
+                </h2>
+                <div className="mt-6 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onAnswer(true)}
+                    className="px-4 py-2 rounded-lg bg-[#EB0A1E] text-white font-medium hover:opacity-90 transition"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onAnswer(false)}
+                    className="px-4 py-2 rounded-lg bg-gray-900 text-white font-medium hover:opacity-90 transition"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            </motion.section>
+          ) : (
+            <motion.div
+              key="carrec-content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+            >
         {/* Global Lease/Finance toggle */}
         <div className="mb-6 md:mb-8 flex justify-start">
           <div className="relative inline-flex rounded-xl bg-gray-100 border border-gray-200 overflow-hidden">
@@ -379,6 +462,9 @@ function App() {
             )}
           </AnimatePresence>
         </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   )
