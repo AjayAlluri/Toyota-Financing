@@ -1,16 +1,38 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
-// Temporary Sign In page with email/password fields
+// Sign In / Sign Up page with Supabase Auth
 export default function SignIn() {
+  const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { signIn, signUp, redirectAfterLogin } = useAuth()
+  const navigate = useNavigate()
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    // Placeholder action
-    alert(`Signing in as ${email}`)
+    setError('')
+    setLoading(true)
+
+    try {
+      if (isSignUp) {
+        await signUp(email, password, fullName || undefined)
+      } else {
+        await signIn(email, password)
+      }
+      
+      // Redirect based on user role after successful authentication
+      redirectAfterLogin()
+    } catch (err: any) {
+      setError(err.message || 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -42,9 +64,32 @@ export default function SignIn() {
       <main className="flex-1 mx-auto w-full max-w-md px-6 grid place-items-center">
         <form onSubmit={onSubmit} className="w-full space-y-5">
           <div className="text-center mb-2">
-            <h2 className="text-2xl font-semibold">Sign In</h2>
-            <p className="text-white/60 text-sm mt-1">Access your saved quotes</p>
+            <h2 className="text-2xl font-semibold">{isSignUp ? 'Sign Up' : 'Sign In'}</h2>
+            <p className="text-white/60 text-sm mt-1">
+              {isSignUp ? 'Create your account' : 'Access your saved quotes'}
+            </p>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded px-3 py-2 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Full Name (Sign Up only) */}
+          {isSignUp && (
+            <label className="block">
+              <span className="block text-sm mb-1 text-white/80">Full Name</span>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full rounded bg-white/5 text-white placeholder-white/40 px-3 py-2 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-[#E50914] transition duration-200"
+                placeholder="John Doe"
+              />
+            </label>
+          )}
 
           {/* Email */}
           <label className="block">
@@ -67,6 +112,7 @@ export default function SignIn() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
               className="w-full rounded bg-white/5 text-white placeholder-white/40 px-3 py-2 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-[#E50914] transition duration-200"
               placeholder="••••••••"
             />
@@ -75,10 +121,25 @@ export default function SignIn() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full rounded bg-[#E50914] text-white font-semibold px-4 py-2 hover:opacity-90 focus:opacity-90 transition-opacity duration-200"
+            disabled={loading}
+            className="w-full rounded bg-[#E50914] text-white font-semibold px-4 py-2 hover:opacity-90 focus:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign In
+            {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
           </button>
+
+          {/* Toggle between Sign In and Sign Up */}
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp)
+                setError('')
+              }}
+              className="text-white/60 hover:text-white text-sm transition-colors duration-200"
+            >
+              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+            </button>
+          </div>
         </form>
       </main>
 
