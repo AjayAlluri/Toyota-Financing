@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
+import { useAuth } from './contexts/AuthContext'
 
 type PlanKey = 'Essential' | 'Comfort' | 'Premium'
 
@@ -111,6 +112,7 @@ function calculateLeasePayment(basePayment: number, mileage: number, termMonths:
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { token } = useAuth()
   const [plans, setPlans] = useState<Record<PlanKey, PlanData>>(defaultPlans)
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
@@ -253,11 +255,17 @@ function App() {
       const sendAnswers = async () => {
       try {
         setIsLoading(true);
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        
         const res = await fetch("http://localhost:3000/api/generate", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers,
           body: JSON.stringify(answers),
         });
 
@@ -410,12 +418,21 @@ function App() {
               >
                 Home
               </Link>
-              <Link
-                to="/signin"
-                className="px-4 py-2 text-base font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
-              >
-                Sign Up / Sign In
-              </Link>
+              {token ? (
+                <Link
+                  to="/profile"
+                  className="px-4 py-2 text-base font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Profile
+                </Link>
+              ) : (
+                <Link
+                  to="/signin"
+                  className="px-4 py-2 text-base font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Sign Up / Sign In
+                </Link>
+              )}
             </nav>
           </div>
         </div>
@@ -1024,10 +1041,25 @@ function App() {
         <div className="mt-8 flex justify-end">
           <button
             type="button"
-            onClick={() => navigate('/upload', { state: { answers, selectedPlan: selected } })}
+            onClick={() => {
+              if (token) {
+                // User is signed in, go to profile to upload documents
+                navigate('/profile', { state: { answers, selectedPlan: selected } });
+              } else {
+                // User is not signed in, redirect to sign in with return path
+                navigate('/signin', { 
+                  state: { 
+                    from: { pathname: '/profile' },
+                    message: 'Sign in to save your quote and upload documents',
+                    answers,
+                    selectedPlan: selected
+                  } 
+                });
+              }
+            }}
             className="inline-flex items-center gap-2 rounded-lg bg-[#EB0A1E] px-5 py-2 text-white font-medium hover:opacity-90 focus:opacity-90 transition"
           >
-            Let's take it to the next step
+            {token ? 'Upload Documents & Save Quote' : 'Sign In to Save Quote & Upload Documents'}
           </button>
         </div>
             </motion.div>
