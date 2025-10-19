@@ -72,7 +72,7 @@ export default function Landing() {
         </main>
 
         {/* Limit scroll height naturally by content; no infinite scroll */}
-        <footer className="px-6 py-8 text-center text-xs text-white/40">
+        <footer className="px-6 py-25 text-center text-xs text-white/40">
           <span>© {new Date().getFullYear()} Toyota Quote — Prototype</span>
         </footer>
       </motion.div>

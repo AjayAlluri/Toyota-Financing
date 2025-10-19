@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
 
 type PlanKey = 'Essential' | 'Comfort' | 'Premium'
 
@@ -57,6 +59,8 @@ function App() {
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
   const [showQuestionnaire, setShowQuestionnaire] = useState<boolean>(false)
   const [answers, setAnswers] = useState<boolean[]>([])
+  const [downPayment, setDownPayment] = useState<number>(5000)
+  const [months, setMonths] = useState<number>(36)
   const entries = useMemo(() => Object.entries(plans) as [PlanKey, typeof plans[PlanKey]][], [])
   const [imageIndexByPlan, setImageIndexByPlan] = useState<Record<PlanKey, number>>({ Essential: 0, Comfort: 0, Premium: 0 })
   const setImageIndex = (planKey: PlanKey, idx: number) => setImageIndexByPlan((prev) => ({ ...prev, [planKey]: idx }))
@@ -121,9 +125,9 @@ function App() {
         <div className="mx-auto max-w-6xl px-6 py-4 md:py-6">
           <div className="flex items-start justify-between">
             <div className="leading-tight">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#111111]">
+              <Link to="/" className="text-2xl md:text-3xl font-semibold tracking-tight text-[#111111] hover:opacity-90 transition-opacity">
                 Toyota <span className="text-[#EB0A1E]">Quote</span>
-              </h1>
+              </Link>
             </div>
             <nav className="flex items-center gap-3">
               <Link
@@ -306,19 +310,49 @@ function App() {
                       <div className="p-6 space-y-6">
                         {/* Arrows replace thumbnails on mobile (above) */}
 
-                        {/* Match meter */}
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-[#111111]">Match</span>
-                            <span className="text-sm text-[#111111]">{plan.match}%</span>
+                        {/* Finance controls (mobile) */}
+                        <div className="space-y-5">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Down Payment</Label>
+                              <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[downPayment]}
+                                value={[downPayment]}
+                                onValueChange={(v) => setDownPayment(v[0])}
+                                min={0}
+                                max={20000}
+                                step={500}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `$${v.toLocaleString()}`}
+                              />
+                            </div>
                           </div>
-                          <div className="mt-2 h-3 w-full rounded-full bg-gray-200 overflow-hidden">
-                            <motion.div
-                              className="h-full rounded-full bg-[#EB0A1E]"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${plan.match}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
-                            />
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Months</Label>
+                              <span className="text-sm text-[#111111]">{months}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[months]}
+                                value={[months]}
+                                onValueChange={(v) => setMonths(v[0])}
+                                min={12}
+                                max={72}
+                                step={6}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `${v} mo`}
+                              />
+                            </div>
+                          </div>
+                          <div className="pt-1 flex items-center justify-between">
+                            <span className="text-sm font-medium text-[#111111]">Estimated Monthly</span>
+                            <span className="text-sm text-[#111111]">$—/mo</span>
                           </div>
                         </div>
 
@@ -417,18 +451,49 @@ function App() {
                       <div className="p-6 md:p-7 space-y-6">
                         {/* Arrows shown on image area; thumbnails removed */}
 
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-[#111111]">Match</span>
-                            <span className="text-sm text-[#111111]">{plan.match}%</span>
+                        {/* Finance controls (desktop/tablet) */}
+                        <div className="space-y-5">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Down Payment</Label>
+                              <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[downPayment]}
+                                value={[downPayment]}
+                                onValueChange={(v) => setDownPayment(v[0])}
+                                min={0}
+                                max={20000}
+                                step={500}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `$${v.toLocaleString()}`}
+                              />
+                            </div>
                           </div>
-                          <div className="mt-2 h-3 w-full rounded-full bg-gray-200 overflow-hidden">
-                            <motion.div
-                              className="h-full rounded-full bg-[#EB0A1E]"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${plan.match}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
-                            />
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Months</Label>
+                              <span className="text-sm text-[#111111]">{months}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[months]}
+                                value={[months]}
+                                onValueChange={(v) => setMonths(v[0])}
+                                min={12}
+                                max={72}
+                                step={6}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `${v} mo`}
+                              />
+                            </div>
+                          </div>
+                          <div className="pt-1 flex items-center justify-between">
+                            <span className="text-sm font-medium text-[#111111]">Estimated Monthly</span>
+                            <span className="text-sm text-[#111111]">$—/mo</span>
                           </div>
                         </div>
 
