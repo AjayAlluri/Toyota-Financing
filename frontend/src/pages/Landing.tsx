@@ -32,24 +32,24 @@ export default function Landing() {
             {/* Brand + subtitle (left) */}
             <Link to="/">
               <div className="leading-tight">
-                <div className="text-base sm:text-xl md:text-2xl font-semibold text-white">
+                <div className="text-xl sm:text-2xl md:text-4xl font-semibold text-white">
                   Toyota <span className="text-[#E50914]">Quote</span>
                 </div>
               </div>
             </Link>
 
             {/* Right-aligned nav actions */}
-            <nav className="flex items-center gap-3">
+            <nav className="flex items-center gap-4 sm:gap-9">
               <Link
                 to="/carRec"
                 state={{ startQuiz: true }}
-                className="px-3 py-1.5 text-sm font-medium text-white/90 hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914] rounded"
+                className="px-4 py-2 text-base font-medium text-white/90 hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914] rounded"
               >
                 Forms
               </Link>
               <Link
                 to="/signin"
-                className="px-3 py-1.5 text-sm font-medium rounded bg-white/5 text-white hover:bg-[#E50914] hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
+                className="px-4 py-2 text-base font-medium rounded bg-white/5 text-white hover:bg-[#E50914] hover:text-white transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]"
               >
                 Sign In
               </Link>
