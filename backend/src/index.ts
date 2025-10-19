@@ -4,11 +4,16 @@ import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
 import OpenAI from "openai";
+import { initializeDatabase, createUserProfile, getUserProfile, updateUserProfile, createCarRecommendation } from "./database.js";
+import authRoutes from "./routes/auth.js";
+import documentRoutes from "./routes/documents.js";
+import { optionalAuth, AuthRequest } from "./auth.js";
 
 const app = express();
 const port = 3000;
 
-
+// Initialize database
+initializeDatabase().catch(console.error);
 
 app.use(cors());
 app.use(express.json());
@@ -23,6 +28,12 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello from Express + TypeScript!");
 });
 
+// Authentication routes
+app.use("/api/auth", authRoutes);
+
+// Document routes
+app.use("/api/documents", documentRoutes);
+
 // Register OpenAI route
 registerOpenAIRoute(app);
 
@@ -31,7 +42,7 @@ app.listen(port, () => {
 });
 
 function registerOpenAIRoute(app: express.Application) {
-  app.post("/api/generate", async (req: Request, res: Response) => {
+  app.post("/api/generate", optionalAuth, async (req: AuthRequest, res: Response) => {
     try {
       console.log("Received request body:", req.body);
       
@@ -223,6 +234,39 @@ RULES
       const out = jsonString ? JSON.parse(jsonString) : {};
       console.log("\n=== Parsed JSON ===");
       console.log(JSON.stringify(out, null, 2));
+
+      // Save profile and recommendations for authenticated users
+      if (req.user) {
+        try {
+          const userId = req.user.id;
+          
+          // Save or update user profile
+          const existingProfile = await getUserProfile(userId);
+          if (existingProfile) {
+            await updateUserProfile(existingProfile.id, req.body);
+          } else {
+            await createUserProfile(userId, req.body);
+          }
+          
+          // Save car recommendation if we have valid data
+          if (out.Budget && out.Balanced && out.Premium) {
+            const profile = await getUserProfile(userId);
+            if (profile) {
+              await createCarRecommendation(
+                userId,
+                profile.id,
+                JSON.stringify(out.Budget),
+                JSON.stringify(out.Balanced),
+                JSON.stringify(out.Premium),
+                JSON.stringify(out)
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Error saving user data:", error);
+          // Don't fail the request if saving fails
+        }
+      }
 
       res.json(out);
     } catch (e) {
