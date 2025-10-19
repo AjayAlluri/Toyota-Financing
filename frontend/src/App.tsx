@@ -58,7 +58,8 @@ function App() {
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
   const [showQuestionnaire, setShowQuestionnaire] = useState<boolean>(false)
-  const [answers, setAnswers] = useState<boolean[]>([])
+  // moved state declaration to avoid redeclaration error
+  // (remove this line and use only the declaration in src/App.tsx near the questionnaire use)
   const [downPayment, setDownPayment] = useState<number>(5000)
   const [months, setMonths] = useState<number>(36)
   const entries = useMemo(() => Object.entries(plans) as [PlanKey, typeof plans[PlanKey]][], [])
