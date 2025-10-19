@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from './contexts/AuthContext'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
 
 type PlanKey = 'Essential' | 'Comfort' | 'Premium'
 
@@ -58,7 +60,10 @@ function App() {
   const [selected, setSelected] = useState<PlanKey>('Comfort')
   const [mode, setMode] = useState<'finance' | 'lease'>('finance')
   const [showQuestionnaire, setShowQuestionnaire] = useState<boolean>(false)
-  const [answers, setAnswers] = useState<boolean[]>([])
+  // moved state declaration to avoid redeclaration error
+  // (remove this line and use only the declaration in src/App.tsx near the questionnaire use)
+  const [downPayment, setDownPayment] = useState<number>(5000)
+  const [months, setMonths] = useState<number>(36)
   const entries = useMemo(() => Object.entries(plans) as [PlanKey, typeof plans[PlanKey]][], [])
   const [imageIndexByPlan, setImageIndexByPlan] = useState<Record<PlanKey, number>>({ Essential: 0, Comfort: 0, Premium: 0 })
   const setImageIndex = (planKey: PlanKey, idx: number) => setImageIndexByPlan((prev) => ({ ...prev, [planKey]: idx }))
@@ -88,22 +93,136 @@ function App() {
     []
   )
 
-  const questions: string[] = [
-    'Do you prefer better fuel economy?',
-    'Is advanced safety a priority?',
-    'Do you want a sporty driving feel?',
-    'Is all-wheel drive important?',
-    'Do you take long road trips often?',
-    'Would you pay more for premium audio?',
-    'Is leather interior a must-have?',
-    'Do you need ample cargo space?',
-    'Will you tow occasionally?',
-    'Do you value the latest tech features?'
+  // Define question types and their configurations
+  type QuestionType = 'number' | 'select' | 'text' | 'yesno'
+  
+  interface Question {
+    id: string
+    text: string
+    type: QuestionType
+    placeholder?: string
+    options?: string[]
+    min?: number
+    max?: number
+    step?: number
+  }
+
+  const questions: Question[] = [
+    {
+      id: 'income',
+      text: 'What is your gross monthly income (before taxes)?',
+      type: 'number',
+      placeholder: 'Enter amount in USD',
+      min: 0,
+      step: 100
+    },
+    {
+      id: 'other_income',
+      text: 'What is your other reliable monthly income?',
+      type: 'number',
+      placeholder: 'Enter amount in USD (0 if none)',
+      min: 0,
+      step: 100
+    },
+    {
+      id: 'expenses',
+      text: 'What are your total monthly fixed expenses?',
+      type: 'number',
+      placeholder: 'Enter amount in USD',
+      min: 0,
+      step: 100
+    },
+    {
+      id: 'savings',
+      text: 'How much liquid savings do you currently have?',
+      type: 'number',
+      placeholder: 'Enter amount in USD',
+      min: 0,
+      step: 1000
+    },
+    {
+      id: 'credit_score',
+      text: 'What is your current credit score?',
+      type: 'select',
+      options: ['300-579 (Poor)', '580-669 (Fair)', '670-739 (Good)', '740-799 (Very Good)', '800-850 (Excellent)', 'I don\'t know']
+    },
+    {
+      id: 'vehicle_ownership',
+      text: 'How long do you plan to keep your next vehicle?',
+      type: 'select',
+      options: ['1-2 years', '3-4 years', '5-6 years', '7+ years', 'I\'m not sure']
+    },
+    {
+      id: 'annual_miles',
+      text: 'How many miles do you typically drive per year?',
+      type: 'select',
+      options: ['Under 10,000', '10,000-15,000', '15,000-20,000', '20,000-25,000', 'Over 25,000']
+    },
+    {
+      id: 'passenger_needs',
+      text: 'What are your passenger or cargo needs?',
+      type: 'select',
+      options: ['Just me', '2-3 people', '4-5 people', '6+ people', 'Need cargo space', 'Need towing capacity']
+    },
+    {
+      id: 'driving_profile',
+      text: 'How would you describe your driving or commute profile?',
+      type: 'select',
+      options: ['City driving', 'Highway driving', 'Mixed city/highway', 'Mostly short trips', 'Long road trips']
+    },
+    {
+      id: 'down_payment',
+      text: 'How much do you plan to put down as a down payment?',
+      type: 'number',
+      placeholder: 'Enter amount in USD',
+      min: 0,
+      step: 500
+    }
   ]
 
-  const currentQuestionIndex = answers.length
-  const onAnswer = (value: boolean) => setAnswers((prev) => [...prev, value])
-  const questionnaireDone = answers.length >= questions.length
+  const [answers, setAnswers] = useState<Record<string, any>>({})
+  const [currentInput, setCurrentInput] = useState<any>('')
+  const currentQuestionIndex = Object.keys(answers).length
+  const currentQuestion = questions[currentQuestionIndex]
+  
+  const onAnswer = (value: any) => {
+    if (currentQuestion) {
+      setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }))
+      setCurrentInput('') // Reset input for next question
+    }
+  }
+
+  const onInputChange = (value: any) => {
+    setCurrentInput(value)
+  }
+
+
+  // Reset current input when question changes
+  useEffect(() => {
+    setCurrentInput('')
+  }, [currentQuestionIndex])
+
+  const canProceed = () => {
+    if (!currentQuestion) return false
+    
+    // For select and yesno, check if answer is already stored
+    if (currentQuestion.type === 'select' || currentQuestion.type === 'yesno') {
+      const currentAnswer = answers[currentQuestion.id as keyof typeof answers]
+      return currentAnswer !== undefined
+    }
+    
+    // For number and text, check current input
+    switch (currentQuestion.type) {
+      case 'number':
+        return currentInput !== '' && currentInput >= 0
+      case 'text':
+        return currentInput !== '' && String(currentInput).trim() !== ''
+      default:
+        return false
+    }
+  }
+  
+  const questionnaireDone = currentQuestionIndex >= questions.length
 
   // If route was navigated to with startQuiz flag, open questionnaire immediately
   if (!showQuestionnaire && (location.state as any)?.startQuiz) {
@@ -123,9 +242,9 @@ function App() {
         <div className="mx-auto max-w-6xl px-6 py-4 md:py-6">
           <div className="flex items-start justify-between">
             <div className="leading-tight">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#111111]">
+              <Link to="/" className="text-2xl md:text-3xl font-semibold tracking-tight text-[#111111] hover:opacity-90 transition-opacity">
                 Toyota <span className="text-[#EB0A1E]">Quote</span>
-              </h1>
+              </Link>
             </div>
             <nav className="flex items-center gap-3">
               <Link
@@ -177,23 +296,99 @@ function App() {
               <div className="rounded-2xl bg-white shadow-lg border border-gray-200 p-6 md:p-8">
                 <p className="text-sm text-[#6b7280] mb-2">Question {currentQuestionIndex + 1} of {questions.length}</p>
                 <h2 className="text-xl md:text-2xl font-semibold text-[#111111] tracking-tight">
-                  {questions[currentQuestionIndex]}
+                  {currentQuestion?.text}
                 </h2>
-                <div className="mt-6 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => onAnswer(true)}
-                    className="px-4 py-2 rounded-lg bg-[#EB0A1E] text-white font-medium hover:opacity-90 transition"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onAnswer(false)}
-                    className="px-4 py-2 rounded-lg bg-gray-900 text-white font-medium hover:opacity-90 transition"
-                  >
-                    No
-                  </button>
+                
+
+                <div className="mt-6">
+                  {currentQuestion?.type === 'number' && (
+                    <div className="space-y-4">
+                      <input
+                        type="number"
+                        placeholder={currentQuestion.placeholder}
+                        min={currentQuestion.min}
+                        max={currentQuestion.max}
+                        step={currentQuestion.step}
+                        value={currentInput}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#EB0A1E] focus:border-transparent outline-none"
+                        onChange={(e) => onInputChange(parseFloat(e.target.value) || '')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onAnswer(currentInput)}
+                        disabled={!canProceed()}
+                        className={`px-6 py-2 rounded-lg font-medium transition ${
+                          canProceed()
+                            ? 'bg-[#EB0A1E] text-white hover:opacity-90'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                  
+                  {currentQuestion?.type === 'select' && (
+                    <div className="space-y-3">
+                      {currentQuestion.options?.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => onAnswer(option)}
+                          className={`w-full text-left px-4 py-3 rounded-lg border transition ${
+                            answers[currentQuestion.id as keyof typeof answers] === option
+                              ? 'border-[#EB0A1E] bg-red-50 text-[#EB0A1E]'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {currentQuestion?.type === 'yesno' && (
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onAnswer(true)}
+                        className="px-4 py-2 rounded-lg bg-[#EB0A1E] text-white font-medium hover:opacity-90 transition"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onAnswer(false)}
+                        className="px-4 py-2 rounded-lg bg-gray-900 text-white font-medium hover:opacity-90 transition"
+                      >
+                        No
+                      </button>
+                    </div>
+                  )}
+                  
+                  {currentQuestion?.type === 'text' && (
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder={currentQuestion.placeholder}
+                        value={currentInput}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#EB0A1E] focus:border-transparent outline-none"
+                        onChange={(e) => onInputChange(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onAnswer(currentInput)}
+                        disabled={!canProceed()}
+                        className={`px-6 py-2 rounded-lg font-medium transition ${
+                          canProceed()
+                            ? 'bg-[#EB0A1E] text-white hover:opacity-90'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.section>
@@ -325,19 +520,49 @@ function App() {
                       <div className="p-6 space-y-6">
                         {/* Arrows replace thumbnails on mobile (above) */}
 
-                        {/* Match meter */}
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-[#111111]">Match</span>
-                            <span className="text-sm text-[#111111]">{plan.match}%</span>
+                        {/* Finance controls (mobile) */}
+                        <div className="space-y-5">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Down Payment</Label>
+                              <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[downPayment]}
+                                value={[downPayment]}
+                                onValueChange={(v) => setDownPayment(v[0])}
+                                min={0}
+                                max={20000}
+                                step={500}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `$${v.toLocaleString()}`}
+                              />
+                            </div>
                           </div>
-                          <div className="mt-2 h-3 w-full rounded-full bg-gray-200 overflow-hidden">
-                            <motion.div
-                              className="h-full rounded-full bg-[#EB0A1E]"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${plan.match}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
-                            />
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Months</Label>
+                              <span className="text-sm text-[#111111]">{months}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[months]}
+                                value={[months]}
+                                onValueChange={(v) => setMonths(v[0])}
+                                min={12}
+                                max={72}
+                                step={6}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `${v} mo`}
+                              />
+                            </div>
+                          </div>
+                          <div className="pt-1 flex items-center justify-between">
+                            <span className="text-sm font-medium text-[#111111]">Estimated Monthly</span>
+                            <span className="text-sm text-[#111111]">$—/mo</span>
                           </div>
                         </div>
 
@@ -436,18 +661,49 @@ function App() {
                       <div className="p-6 md:p-7 space-y-6">
                         {/* Arrows shown on image area; thumbnails removed */}
 
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-[#111111]">Match</span>
-                            <span className="text-sm text-[#111111]">{plan.match}%</span>
+                        {/* Finance controls (desktop/tablet) */}
+                        <div className="space-y-5">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Down Payment</Label>
+                              <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[downPayment]}
+                                value={[downPayment]}
+                                onValueChange={(v) => setDownPayment(v[0])}
+                                min={0}
+                                max={20000}
+                                step={500}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `$${v.toLocaleString()}`}
+                              />
+                            </div>
                           </div>
-                          <div className="mt-2 h-3 w-full rounded-full bg-gray-200 overflow-hidden">
-                            <motion.div
-                              className="h-full rounded-full bg-[#EB0A1E]"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${plan.match}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
-                            />
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[#111111]">Months</Label>
+                              <span className="text-sm text-[#111111]">{months}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Slider
+                                defaultValue={[months]}
+                                value={[months]}
+                                onValueChange={(v) => setMonths(v[0])}
+                                min={12}
+                                max={72}
+                                step={6}
+                                className="w-full"
+                                showTooltip
+                                tooltipContent={(v) => `${v} mo`}
+                              />
+                            </div>
+                          </div>
+                          <div className="pt-1 flex items-center justify-between">
+                            <span className="text-sm font-medium text-[#111111]">Estimated Monthly</span>
+                            <span className="text-sm text-[#111111]">$—/mo</span>
                           </div>
                         </div>
 
