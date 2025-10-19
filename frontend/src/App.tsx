@@ -48,7 +48,7 @@ const defaultPlans: Record<PlanKey, PlanData> = {
     match: 72,
     details: ['Base infotainment', 'Great MPG', 'Low insurance'],
     heroImages: [
-      'https://placehold.co/1400x800?text=Toyota+Essential',
+      '/essential.png',
     ],
   },
   Comfort: {
@@ -58,7 +58,7 @@ const defaultPlans: Record<PlanKey, PlanData> = {
     match: 88,
     details: ['Advanced safety', 'Comfort pack', 'Alloy wheels'],
     heroImages: [
-      'https://placehold.co/1400x800?text=Toyota+Comfort',
+      '/comfort.png',
     ],
   },
   Premium: {
@@ -68,7 +68,7 @@ const defaultPlans: Record<PlanKey, PlanData> = {
     match: 91,
     details: ['Premium audio', 'Leather interior', 'Driver assist+'],
     heroImages: [
-      'https://placehold.co/1400x800?text=Toyota+Premium',
+      '/premium.png',
     ],
   },
 }
@@ -121,6 +121,17 @@ function App() {
   const [months, setMonths] = useState<number>(36)
    const [leaseMonths, setLeaseMonths] = useState<number>(36)
   const [annualMileage, setAnnualMileage] = useState<number>(12000)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [])
+
   const entries = useMemo(() => Object.entries(plans) as [PlanKey, PlanData][], [plans])
   const [imageIndexByPlan, setImageIndexByPlan] = useState<Record<PlanKey, number>>({ Essential: 0, Comfort: 0, Premium: 0 })
   const setImageIndex = (planKey: PlanKey, idx: number) => setImageIndexByPlan((prev) => ({ ...prev, [planKey]: idx }))
@@ -291,9 +302,7 @@ function App() {
                 `${data.Budget.seats || 5} seats`
               ],
               heroImages: [
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Budget.model)}`,
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Budget.model)}+2`,
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Budget.model)}+3`
+                '/essential.png'
               ],
               carData: data.Budget
             },
@@ -308,9 +317,7 @@ function App() {
                 `${data.Balanced.seats || 5} seats`
               ],
               heroImages: [
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Balanced.model)}`,
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Balanced.model)}+2`,
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Balanced.model)}+3`
+                '/comfort.png'
               ],
               carData: data.Balanced
             },
@@ -325,9 +332,7 @@ function App() {
                 `${data.Premium.seats || 5} seats`
               ],
               heroImages: [
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Premium.model)}`,
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Premium.model)}+2`,
-                `https://placehold.co/1400x800?text=${encodeURIComponent(data.Premium.model)}+3`
+                '/premium.png'
               ],
               carData: data.Premium
             }
@@ -397,55 +402,100 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white overflow-hidden" style={{ cursor: 'none' }}>
+      {/* Custom Cursor with Red Glow */}
+      <motion.div
+        className="fixed pointer-events-none z-50"
+        style={{
+          left: mousePosition.x,
+          top: mousePosition.y,
+        }}
+        animate={{
+          x: -12,
+          y: -12,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 500,
+          damping: 28
+        }}
+      >
+        <div className="relative">
+          {/* Trail effect */}
+          <div className="absolute inset-0 w-8 h-8 bg-red-500/20 rounded-full blur-lg animate-ping"></div>
+          {/* Outer glow */}
+          <div className="absolute inset-0 w-6 h-6 bg-red-500/30 rounded-full blur-md animate-pulse"></div>
+          {/* Inner glow */}
+          <div className="absolute inset-0 w-4 h-4 bg-red-400/50 rounded-full blur-sm"></div>
+          {/* Core cursor */}
+          <div className="w-3 h-3 bg-red-500 rounded-full shadow-lg shadow-red-500/50"></div>
+        </div>
+      </motion.div>
+
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
+
       {/* Top accent bars */}
       <div className="h-8 w-full bg-black" />
-      <div className="h-1 w-full bg-[#EB0A1E]" />
+      <div className="h-1 w-full bg-red-500" />
 
-      {/* Header aligned to landing: brand left, actions right */}
-      <header className="bg-white/90 backdrop-blur border-b border-gray-200">
-        <div className="mx-auto max-w-6xl px-6 py-4 md:py-6">
-          <div className="flex items-start justify-between">
-            <div className="leading-tight">
-              <Link to="/" className="text-2xl md:text-4xl font-semibold tracking-tight text-[#111111] hover:opacity-90 transition-opacity">
-                Toyota <span className="text-[#EB0A1E]">Quote</span>
-              </Link>
-            </div>
-            <nav className="flex items-center gap-4 md:gap-6">
+      {/* Header with dark theme */}
+      <header className="w-full backdrop-blur-sm bg-black/20 border-b border-white/10">
+        <div className="mx-auto max-w-7xl px-6 py-6 flex items-center justify-between">
+          <Link to="/" className="group">
+            <motion.div
+              className="flex items-center gap-3"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-2xl font-bold">
+                Toyota <span className="text-red-500">Quote</span>
+              </div>
+            </motion.div>
+          </Link>
+
+          <nav className="flex items-center gap-6">
+            <Link
+              to="/"
+              className="group flex items-center gap-2 px-4 py-2 text-white/90 hover:text-white transition-all duration-200 hover:bg-white/10 rounded-lg"
+            >
+              <CheckCircle2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              Home
+            </Link>
+            {token ? (
               <Link
-                to="/"
-                className="px-4 py-2 text-base font-medium rounded bg-[#111111] text-white hover:opacity-90 focus:opacity-90 transition-opacity duration-200"
+                to="/profile"
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
               >
-                Home
+                Profile
               </Link>
-              {token ? (
-                <Link
-                  to="/profile"
-                  className="px-4 py-2 text-base font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Profile
-                </Link>
-              ) : (
-                <Link
-                  to="/signin"
-                  className="px-4 py-2 text-base font-medium rounded bg-white text-[#111111] border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Sign Up / Sign In
-                </Link>
-              )}
-            </nav>
-          </div>
+            ) : (
+              <Link
+                to="/signin"
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
+              >
+                Sign In
+              </Link>
+            )}
+          </nav>
         </div>
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-6xl px-6 py-8 md:py-12">
+      <main className="mx-auto max-w-6xl px-6 py-8 md:py-12 relative z-10">
         {/* Loading Indicator */}
         {isLoading && (
-          <div className="mb-8 rounded-2xl bg-white shadow-lg border border-gray-200 p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB0A1E] mb-4"></div>
-            <h2 className="text-xl font-semibold text-[#111111]">Analyzing Your Financial Profile</h2>
-            <p className="text-gray-600 mt-2">Finding the best Toyota options for your budget</p>
+          <div className="mb-8 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mb-4"></div>
+            <h2 className="text-xl font-semibold text-white">Analyzing Your Financial Profile</h2>
+            <p className="text-white/70 mt-2">Finding the best Toyota options for your budget</p>
           </div>
         )}
         
@@ -459,9 +509,9 @@ function App() {
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="mx-auto max-w-2xl"
             >
-              <div className="rounded-2xl bg-white shadow-lg border border-gray-200 p-6 md:p-8">
-                <p className="text-sm text-[#6b7280] mb-2">Question {currentQuestionIndex + 1} of {questions.length}</p>
-                <h2 className="text-xl md:text-2xl font-semibold text-[#111111] tracking-tight">
+              <div className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 md:p-8">
+                <p className="text-sm text-white/60 mb-2">Question {currentQuestionIndex + 1} of {questions.length}</p>
+                <h2 className="text-xl md:text-2xl font-semibold text-white tracking-tight">
                   {currentQuestion?.text}
                 </h2>
                 
@@ -476,7 +526,7 @@ function App() {
                         max={currentQuestion.max}
                         step={currentQuestion.step}
                         value={currentInput}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#EB0A1E] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-white placeholder-white/50"
                         onChange={(e) => onInputChange(parseFloat(e.target.value) || '')}
                       />
                       <button
@@ -485,8 +535,8 @@ function App() {
                         disabled={!canProceed()}
                         className={`px-6 py-2 rounded-lg font-medium transition ${
                           canProceed()
-                            ? 'bg-[#EB0A1E] text-white hover:opacity-90'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-red-500/25'
+                            : 'bg-white/10 text-white/50 cursor-not-allowed'
                         }`}
                       >
                         Continue
@@ -503,8 +553,8 @@ function App() {
                           onClick={() => onAnswer(option)}
                           className={`w-full text-left px-4 py-3 rounded-lg border transition ${
                             answers[currentQuestion.id as keyof typeof answers] === option
-                              ? 'border-[#EB0A1E] bg-red-50 text-[#EB0A1E]'
-                              : 'border-gray-300 hover:border-gray-400'
+                              ? 'border-red-500 bg-red-500/20 text-red-400'
+                              : 'border-white/20 bg-white/5 hover:border-white/40 text-white'
                           }`}
                         >
                           {option}
@@ -518,14 +568,14 @@ function App() {
                       <button
                         type="button"
                         onClick={() => onAnswer(true)}
-                        className="px-4 py-2 rounded-lg bg-[#EB0A1E] text-white font-medium hover:opacity-90 transition"
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white font-medium hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-red-500/25 transition"
                       >
                         Yes
                       </button>
                       <button
                         type="button"
                         onClick={() => onAnswer(false)}
-                        className="px-4 py-2 rounded-lg bg-gray-900 text-white font-medium hover:opacity-90 transition"
+                        className="px-4 py-2 rounded-lg bg-white/10 text-white font-medium hover:bg-white/20 transition"
                       >
                         No
                       </button>
@@ -538,7 +588,7 @@ function App() {
                         type="text"
                         placeholder={currentQuestion.placeholder}
                         value={currentInput}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#EB0A1E] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-white placeholder-white/50"
                         onChange={(e) => onInputChange(e.target.value)}
                       />
                       <button
@@ -547,8 +597,8 @@ function App() {
                         disabled={!canProceed()}
                         className={`px-6 py-2 rounded-lg font-medium transition ${
                           canProceed()
-                            ? 'bg-[#EB0A1E] text-white hover:opacity-90'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-red-500/25'
+                            : 'bg-white/10 text-white/50 cursor-not-allowed'
                         }`}
                       >
                         Continue
@@ -567,26 +617,26 @@ function App() {
             >
         {/* Global Lease/Finance toggle */}
         <div className="mb-6 md:mb-8 flex justify-start">
-          <div className="relative inline-flex rounded-xl bg-gray-100 border border-gray-200 overflow-hidden">
+          <div className="relative inline-flex rounded-xl bg-white/10 border border-white/20 overflow-hidden">
             <button
               type="button"
               aria-pressed={mode === 'lease'}
               onClick={() => setMode('lease')}
               className={[
                 'px-4 py-2 text-sm font-medium transition',
-                mode === 'lease' ? 'bg-white text-[#111111] shadow-inner' : 'text-[#6b7280]'
+                mode === 'lease' ? 'bg-white/20 text-white shadow-inner' : 'text-white/60'
               ].join(' ')}
             >
               Lease
             </button>
-            <div className="w-px bg-gray-300" />
+            <div className="w-px bg-white/20" />
             <button
               type="button"
               aria-pressed={mode === 'finance'}
               onClick={() => setMode('finance')}
               className={[
                 'px-4 py-2 text-sm font-medium transition',
-                mode === 'finance' ? 'bg-white text-[#111111] shadow-inner' : 'text-[#6b7280]'
+                mode === 'finance' ? 'bg-white/20 text-white shadow-inner' : 'text-white/60'
               ].join(' ')}
             >
               Finance
@@ -609,12 +659,12 @@ function App() {
                   aria-checked={isSelected}
                   onClick={() => setSelected(key)}
                   className={[
-                    'rounded-2xl bg-white text-left shadow-lg border border-gray-200',
+                    'rounded-2xl bg-white/5 backdrop-blur-sm text-left shadow-lg border border-white/10',
                     'p-6 md:p-7 transition will-change-transform',
                     'md:h-[120px]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EB0A1E] focus-visible:ring-offset-2 focus-visible:ring-offset-white',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
                     isSelected
-                      ? 'scale-[1.02] opacity-100 blur-0 border-t-4 border-[#EB0A1E]'
+                      ? 'scale-[1.02] opacity-100 blur-0 border-t-4 border-red-500'
                       : 'opacity-70 blur-[2px]'
                   ].join(' ')}
                   whileHover={{ y: -4, boxShadow: '0 12px 24px rgba(0,0,0,0.08)' }}
@@ -625,18 +675,18 @@ function App() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-xl md:text-2xl font-semibold text-[#111111]">{plan.title}</h2>
+                        <h2 className="text-xl md:text-2xl font-semibold text-white">{plan.title}</h2>
                         <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                          key === 'Essential' ? 'bg-blue-100 text-blue-700' :
-                          key === 'Comfort' ? 'bg-green-100 text-green-700' :
-                          'bg-purple-100 text-purple-700'
+                          key === 'Essential' ? 'bg-blue-500/20 text-blue-400' :
+                          key === 'Comfort' ? 'bg-green-500/20 text-green-400' :
+                          'bg-purple-500/20 text-purple-400'
                         }`}>
                           {key === 'Essential' ? 'Budget' : key === 'Comfort' ? 'Balanced' : 'Premium'}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-[#9CA3AF]">{plan.blurb}</p>
+                      <p className="mt-1 text-sm text-white/70">{plan.blurb}</p>
                     </div>
-                    <span className="inline-flex items-center justify-center whitespace-nowrap text-center leading-none text-sm md:text-base font-medium text-[#111111] bg-gray-100 rounded-full px-3 py-1 border border-gray-200 min-w-[120px]">
+                    <span className="inline-flex items-center justify-center whitespace-nowrap text-center leading-none text-sm md:text-base font-medium text-white bg-white/10 rounded-full px-3 py-1 border border-white/20 min-w-[120px]">
                       {plan.priceRange || 'Price TBD'}
                     </span>
                   </div>
@@ -650,45 +700,21 @@ function App() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-                      className="mt-3 rounded-2xl bg-white shadow-lg border border-gray-200 overflow-hidden md:hidden"
+                      className="mt-3 rounded-2xl bg-white/5 backdrop-blur-sm shadow-lg border border-white/10 overflow-hidden md:hidden"
                     >
                       {/* Shared image + meter for both modes */}
-                      <div className="relative w-full h-64 bg-gray-100 flex items-center justify-center">
+                      <div className="relative w-full h-64 bg-white/5 flex items-center justify-center">
                         {plan.heroImages.length > 0 ? (
-                          <>
-                            <AnimatePresence mode="wait">
-                              <motion.img
-                                key={plan.heroImages[imageIndexByPlan[key] ?? 0]}
-                                src={plan.heroImages[imageIndexByPlan[key] ?? 0]}
-                                alt={`${plan.title} car`}
-                                className="absolute inset-0 w-full h-full object-cover select-none rounded-none"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.35, ease: 'easeOut' }}
-                              />
-                            </AnimatePresence>
-                            <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-2">
-                              <button
-                                type="button"
-                                aria-label="Previous image"
-                                onClick={() => goPrev(key)}
-                                className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/60 hover:bg-white/80 text-[#111111] shadow border border-gray-200 backdrop-blur"
-                              >
-                                <ChevronLeft className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                aria-label="Next image"
-                                onClick={() => goNext(key)}
-                                className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/60 hover:bg-white/80 text-[#111111] shadow border border-gray-200 backdrop-blur"
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </>
+                          <motion.img
+                            src={plan.heroImages[0]}
+                            alt={`${plan.title} car`}
+                            className="absolute inset-0 w-full h-full object-contain select-none rounded-none"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.5, ease: 'easeOut' }}
+                          />
                         ) : (
-                          <span className="text-sm text-gray-500">Image will appear here</span>
+                          <span className="text-sm text-white/50">Image will appear here</span>
                         )}
                       </div>
 
@@ -698,8 +724,8 @@ function App() {
                           <div className="space-y-5">
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Down Payment</Label>
-                                <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                                <Label className="text-white">Down Payment</Label>
+                                <span className="text-sm text-white">${downPayment.toLocaleString()}</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -717,8 +743,8 @@ function App() {
                             </div>
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Term Length</Label>
-                                <span className="text-sm text-[#111111]">{months} months</span>
+                                <Label className="text-white">Term Length</Label>
+                                <span className="text-sm text-white">{months} months</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -739,8 +765,8 @@ function App() {
                           <div className="space-y-5">
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Lease Term</Label>
-                                <span className="text-sm text-[#111111]">{leaseMonths} months</span>
+                                <Label className="text-white">Lease Term</Label>
+                                <span className="text-sm text-white">{leaseMonths} months</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -758,8 +784,8 @@ function App() {
                             </div>
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Annual Mileage</Label>
-                                <span className="text-sm text-[#111111]">{annualMileage.toLocaleString()} mi/yr</span>
+                                <Label className="text-white">Annual Mileage</Label>
+                                <span className="text-sm text-white">{annualMileage.toLocaleString()} mi/yr</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -778,9 +804,9 @@ function App() {
                           </div>
                         )}
                         
-                        <div className="pt-2 flex items-center justify-between border-t border-gray-200">
-                          <span className="text-base font-semibold text-[#111111]">Estimated Monthly</span>
-                          <span className="text-2xl font-bold text-[#EB0A1E]">
+                        <div className="pt-2 flex items-center justify-between border-t border-white/10">
+                          <span className="text-base font-semibold text-white">Estimated Monthly</span>
+                          <span className="text-2xl font-bold text-red-500">
                             {(() => {
                               if (mode === 'finance' && plan.carData?.price && plan.carData?.finance?.apr_percent) {
                                 const payment = calculateMonthlyPayment(
@@ -805,11 +831,11 @@ function App() {
 
                         {mode === 'lease' && (
                           <div className="space-y-3">
-                            <h3 className="text-base font-semibold text-[#111111]">Leasing basics</h3>
+                            <h3 className="text-base font-semibold text-white">Leasing basics</h3>
                             <ul className="grid grid-cols-1 gap-3">
                               {leaseConditions.map((d) => (
-                                <li key={d} className="flex items-center gap-2 text-[#111111]">
-                                  <CheckCircle2 className="h-5 w-5 text-[#EB0A1E]" aria-hidden="true" />
+                                <li key={d} className="flex items-center gap-2 text-white">
+                                  <CheckCircle2 className="h-5 w-5 text-red-500" aria-hidden="true" />
                                   <span className="text-sm">{d}</span>
                                 </li>
                               ))}
@@ -820,8 +846,8 @@ function App() {
                         {/* Specs list */}
                         <ul className="grid grid-cols-1 gap-3">
                           {plan.details.map((d) => (
-                            <li key={d} className="flex items-center gap-2 text-[#111111]">
-                              <CheckCircle2 className="h-5 w-5 text-[#EB0A1E]" aria-hidden="true" />
+                            <li key={d} className="flex items-center gap-2 text-white">
+                              <CheckCircle2 className="h-5 w-5 text-red-500" aria-hidden="true" />
                               <span className="text-sm md:text-base">{d}</span>
                             </li>
                           ))}
@@ -845,7 +871,7 @@ function App() {
                 transition={{ type: 'spring', stiffness: 280, damping: 28 }}
                 className={[
                   'hidden md:block',
-                  'rounded-2xl bg-white shadow-lg border border-gray-200 overflow-hidden',
+                  'rounded-2xl bg-white/5 backdrop-blur-sm shadow-lg border border-white/10 overflow-hidden',
                   'md:col-start-1 md:col-end-4 md:row-start-2',
                   // visually attach to the card above
                   'md:mt-3'
@@ -856,42 +882,18 @@ function App() {
                   return (
                     <div className="w-full">
                       {/* Shared image + meter for both modes */}
-                      <div className="relative w-full h-72 lg:h-96 bg-gray-100 flex items-center justify-center">
+                      <div className="relative w-full h-72 lg:h-96 bg-white/5 flex items-center justify-center">
                         {plan.heroImages.length > 0 ? (
-                          <>
-                            <AnimatePresence mode="wait">
-                              <motion.img
-                                key={plan.heroImages[imageIndexByPlan[selected] ?? 0]}
-                                src={plan.heroImages[imageIndexByPlan[selected] ?? 0]}
-                                alt={`${plan.title} car`}
-                                className="absolute inset-0 w-full h-full object-cover select-none"
-                                initial={{ opacity: 0, x: 24 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -24 }}
-                                transition={{ duration: 0.4, ease: 'easeOut' }}
-                              />
-                            </AnimatePresence>
-                            <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-3">
-                              <button
-                                type="button"
-                                aria-label="Previous image"
-                                onClick={() => goPrev(selected)}
-                                className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/60 hover:bg-white/80 text-[#111111] shadow border border-gray-200 backdrop-blur"
-                              >
-                                <ChevronLeft className="h-5 w-5" />
-                              </button>
-                              <button
-                                type="button"
-                                aria-label="Next image"
-                                onClick={() => goNext(selected)}
-                                className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/60 hover:bg-white/80 text-[#111111] shadow border border-gray-200 backdrop-blur"
-                              >
-                                <ChevronRight className="h-5 w-5" />
-                              </button>
-                            </div>
-                          </>
+                          <motion.img
+                            src={plan.heroImages[0]}
+                            alt={`${plan.title} car`}
+                            className="absolute inset-0 w-full h-full object-contain select-none"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.5, ease: 'easeOut' }}
+                          />
                         ) : (
-                          <span className="text-sm text-gray-500">Image will appear here</span>
+                          <span className="text-sm text-white/50">Image will appear here</span>
                         )}
                       </div>
 
@@ -901,8 +903,8 @@ function App() {
                           <div className="space-y-5">
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Down Payment</Label>
-                                <span className="text-sm text-[#111111]">${downPayment.toLocaleString()}</span>
+                                <Label className="text-white">Down Payment</Label>
+                                <span className="text-sm text-white">${downPayment.toLocaleString()}</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -920,8 +922,8 @@ function App() {
                             </div>
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Term Length</Label>
-                                <span className="text-sm text-[#111111]">{months} months</span>
+                                <Label className="text-white">Term Length</Label>
+                                <span className="text-sm text-white">{months} months</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -942,8 +944,8 @@ function App() {
                           <div className="space-y-5">
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Lease Term</Label>
-                                <span className="text-sm text-[#111111]">{leaseMonths} months</span>
+                                <Label className="text-white">Lease Term</Label>
+                                <span className="text-sm text-white">{leaseMonths} months</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -961,8 +963,8 @@ function App() {
                             </div>
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-[#111111]">Annual Mileage</Label>
-                                <span className="text-sm text-[#111111]">{annualMileage.toLocaleString()} mi/yr</span>
+                                <Label className="text-white">Annual Mileage</Label>
+                                <span className="text-sm text-white">{annualMileage.toLocaleString()} mi/yr</span>
                               </div>
                               <div className="mt-2">
                                 <Slider
@@ -981,9 +983,9 @@ function App() {
                           </div>
                         )}
                         
-                        <div className="pt-2 flex items-center justify-between border-t border-gray-200">
-                          <span className="text-base font-semibold text-[#111111]">Estimated Monthly</span>
-                          <span className="text-2xl font-bold text-[#EB0A1E]">
+                        <div className="pt-2 flex items-center justify-between border-t border-white/10">
+                          <span className="text-base font-semibold text-white">Estimated Monthly</span>
+                          <span className="text-2xl font-bold text-red-500">
                             {(() => {
                               if (mode === 'finance' && plan.carData?.price && plan.carData?.finance?.apr_percent) {
                                 const payment = calculateMonthlyPayment(
@@ -1008,11 +1010,11 @@ function App() {
 
                         {mode === 'lease' && (
                           <div className="space-y-3">
-                            <h3 className="text-base font-semibold text-[#111111]">Leasing basics</h3>
+                            <h3 className="text-base font-semibold text-white">Leasing basics</h3>
                             <ul className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                               {leaseConditions.map((d) => (
-                                <li key={d} className="flex items-center gap-2 text-[#111111]">
-                                  <CheckCircle2 className="h-5 w-5 text-[#EB0A1E]" aria-hidden="true" />
+                                <li key={d} className="flex items-center gap-2 text-white">
+                                  <CheckCircle2 className="h-5 w-5 text-red-500" aria-hidden="true" />
                                   <span className="text-sm md:text-base">{d}</span>
                                 </li>
                               ))}
@@ -1022,8 +1024,8 @@ function App() {
 
                         <ul className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                           {plan.details.map((d) => (
-                            <li key={d} className="flex items-center gap-2 text-[#111111]">
-                              <CheckCircle2 className="h-5 w-5 text-[#EB0A1E]" aria-hidden="true" />
+                            <li key={d} className="flex items-center gap-2 text-white">
+                              <CheckCircle2 className="h-5 w-5 text-red-500" aria-hidden="true" />
                               <span className="text-sm md:text-base">{d}</span>
                             </li>
                           ))}
@@ -1057,7 +1059,7 @@ function App() {
                 });
               }
             }}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#EB0A1E] px-5 py-2 text-white font-medium hover:opacity-90 focus:opacity-90 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-5 py-2 text-white font-medium hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-red-500/25 transition"
           >
             {token ? 'Upload Documents & Save Quote' : 'Sign In to Save Quote & Upload Documents'}
           </button>
