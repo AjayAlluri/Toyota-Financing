@@ -4,3 +4,12 @@
   html, body, #root { height: 100%; background-color: #000; }
   :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
 }
+
+/* Polished range slider styling to match black/white/red theme */
+.slider { appearance: none; -webkit-appearance: none; height: 6px; background: transparent; border-radius: 9999px; outline: none; cursor: pointer; }
+.slider::-webkit-slider-runnable-track { height: 6px; background: #ffffff; border-radius: 9999px; }
+.slider::-moz-range-track { height: 6px; background: #ffffff; border-radius: 9999px; }
+.slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #ffffff; border: 2px solid #EB0A1E; border-radius: 9999px; margin-top: -6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: transform 0.15s ease; }
+.slider::-moz-range-thumb { width: 18px; height: 18px; background: #ffffff; border: 2px solid #EB0A1E; border-radius: 9999px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: transform 0.15s ease; }
+.slider:hover::-webkit-slider-thumb { transform: scale(1.03); }
+.slider:hover::-moz-range-thumb { transform: scale(1.03); }
