@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from './contexts/AuthContext'
 
 type PlanKey = 'Essential' | 'Comfort' | 'Premium'
-
+// Car data interface
 interface CarData {
   year?: number;
   make?: string;
@@ -28,8 +28,9 @@ interface CarData {
     annual_mileage_limit?: number;
     lease_score?: number;
   };
-}
 
+
+// Plan data interface
 interface PlanData {
   title: string;
   priceRange: string;
