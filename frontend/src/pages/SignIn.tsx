@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
-// Sign In page with email/password fields and registration
+// Sign  page with email/password fields and registration
 export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

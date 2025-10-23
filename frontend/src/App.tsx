@@ -30,7 +30,7 @@ interface CarData {
   };
 
 
-// Plan dta interface
+// Plan dtasdfa interface
 interface PlanData {
   title: string;
   priceRange: string;
