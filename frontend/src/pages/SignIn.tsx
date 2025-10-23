@@ -9,7 +9,6 @@ export default function SignIn() {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [isRegistering, setIsRegistering] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   
@@ -21,7 +20,7 @@ export default function SignIn() {
   const customMessage = (location.state as any)?.message
   const quoteData = (location.state as any)?.answers
   const selectedPlan = (location.state as any)?.selectedPlan
-
+// ahhhh i'm adarsh i'm crazy
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
